@@ -10,11 +10,10 @@ class DashboardScreen extends StatelessWidget {
       backgroundColor: AppTheme.black,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Title
               const Text(
                 'Dashboard',
                 style: TextStyle(
@@ -23,25 +22,30 @@ class DashboardScreen extends StatelessWidget {
                   color: Colors.white,
                 ),
               ),
+              const SizedBox(height: 4),
+              Text(
+                'Project Summary',
+                style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+              ),
               const SizedBox(height: 24),
-              // Summary Cards - 2x2 Grid
+              // Summary Cards 2x2
               Row(
                 children: [
                   Expanded(
                     child: _buildSummaryCard(
-                      icon: Icons.calendar_today,
-                      number: '24',
-                      label: 'In Progress',
-                      color: AppTheme.netflixRed,
+                      Icons.calendar_today,
+                      '24',
+                      'In Progress',
+                      AppTheme.netflixRed,
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: _buildSummaryCard(
-                      icon: Icons.access_time,
-                      number: '56',
-                      label: 'In Review',
-                      color: Colors.orange,
+                      Icons.access_time,
+                      '56',
+                      'In Review',
+                      Colors.orange,
                     ),
                   ),
                 ],
@@ -51,25 +55,25 @@ class DashboardScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _buildSummaryCard(
-                      icon: Icons.warning_rounded,
-                      number: '16',
-                      label: 'On Hold',
-                      color: AppTheme.netflixRed,
+                      Icons.warning_rounded,
+                      '16',
+                      'On Hold',
+                      AppTheme.netflixRed,
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: _buildSummaryCard(
-                      icon: Icons.check_circle,
-                      number: '45',
-                      label: 'Completed',
-                      color: Colors.green,
+                      Icons.check_circle,
+                      '45',
+                      'Completed',
+                      Colors.green,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 32),
-              // Project Statistics Chart
+              // Project Statistics
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -104,25 +108,23 @@ class DashboardScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 24),
-                    // Simple Bar Chart Representation
                     SizedBox(
                       height: 200,
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _buildBarGroup('S', [60, 40, 80]),
-                          _buildBarGroup('M', [70, 50, 60]),
-                          _buildBarGroup('T', [80, 60, 70]),
-                          _buildBarGroup('W', [65, 55, 75]),
-                          _buildBarGroup('T', [75, 65, 85]),
-                          _buildBarGroup('F', [70, 45, 70]),
-                          _buildBarGroup('S', [55, 50, 65]),
+                          _buildBarGroup('S', [10, 15, 5]),
+                          _buildBarGroup('M', [15, 20, 10]),
+                          _buildBarGroup('T', [25, 20, 30]),
+                          _buildBarGroup('W', [10, 15, 10]),
+                          _buildBarGroup('T', [15, 20, 25]),
+                          _buildBarGroup('F', [20, 15, 25]),
+                          _buildBarGroup('S', [5, 10, 5]),
                         ],
                       ),
                     ),
                     const SizedBox(height: 16),
-                    // Legend
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -137,24 +139,24 @@ class DashboardScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              // Bottom Metric Cards
+              // Bottom Metrics
               Row(
                 children: [
                   Expanded(
                     child: _buildMetricCard(
-                      title: 'Total working hour',
-                      value: '50:25:06',
-                      change: '+34%',
-                      isPositive: true,
+                      'Total working hour',
+                      '50:25:06',
+                      '+34%',
+                      true,
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: _buildMetricCard(
-                      title: 'Total task activity',
-                      value: '125 Task',
-                      change: '-50%',
-                      isPositive: false,
+                      'Total task activity',
+                      '125 Task',
+                      '-50%',
+                      false,
                     ),
                   ),
                 ],
@@ -167,12 +169,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryCard({
-    required IconData icon,
-    required String number,
-    required String label,
-    required Color color,
-  }) {
+  Widget _buildSummaryCard(IconData icon, String number, String label, Color color) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -203,10 +200,7 @@ class DashboardScreen extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[400],
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey[400]),
           ),
         ],
       ),
@@ -253,10 +247,7 @@ class DashboardScreen extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[400],
-          ),
+          style: TextStyle(fontSize: 12, color: Colors.grey[400]),
         ),
       ],
     );
@@ -268,29 +259,15 @@ class DashboardScreen extends StatelessWidget {
         Container(
           width: 12,
           height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[400],
-          ),
-        ),
+        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[400])),
       ],
     );
   }
 
-  Widget _buildMetricCard({
-    required String title,
-    required String value,
-    required String change,
-    required bool isPositive,
-  }) {
+  Widget _buildMetricCard(String title, String value, String change, bool isPositive) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -309,10 +286,7 @@ class DashboardScreen extends StatelessWidget {
         children: [
           Text(
             title,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[400],
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey[400]),
           ),
           const SizedBox(height: 8),
           Row(
