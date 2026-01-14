@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1070821908373",
+    "project_id": "synapse-9253c",
+    "storage_bucket": "synapse-9253c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1070821908373:android:b719b2da1355fda9b1609c",
+        "android_client_info": {
+          "package_name": "com.example.synapse"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD3s6A64A1vmO_9Jop9cCYSSiDkBmITvS0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
