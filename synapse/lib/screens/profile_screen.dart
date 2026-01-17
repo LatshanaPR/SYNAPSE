@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/auth_service.dart';
+import '../services/settings_service.dart';
 import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -12,8 +13,75 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _notificationsEnabled = true;
+  bool _alarmsEnabled = true;
   bool _darkModeEnabled = true;
+  bool _isLoading = true;
   final AuthService _authService = AuthService();
+  final SettingsService _settingsService = SettingsService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    try {
+      final notificationsEnabled = await _settingsService.getNotificationsEnabled();
+      final alarmsEnabled = await _settingsService.getAlarmsEnabled();
+      setState(() {
+        _notificationsEnabled = notificationsEnabled;
+        _alarmsEnabled = alarmsEnabled;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _updateNotificationsEnabled(bool value) async {
+    setState(() {
+      _notificationsEnabled = value;
+    });
+    try {
+      await _settingsService.setNotificationsEnabled(value);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _notificationsEnabled = !value; // Revert on error
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating notification settings: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _updateAlarmsEnabled(bool value) async {
+    setState(() {
+      _alarmsEnabled = value;
+    });
+    try {
+      await _settingsService.setAlarmsEnabled(value);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _alarmsEnabled = !value; // Revert on error
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating alarm settings: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -156,15 +224,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _buildSettingItem(
                       icon: Icons.notifications_outlined,
                       title: 'Notifications',
-                      trailing: Switch(
-                        value: _notificationsEnabled,
-                        onChanged: (value) {
-                          setState(() {
-                            _notificationsEnabled = value;
-                          });
-                        },
-                        activeColor: AppTheme.netflixRed,
-                      ),
+                      trailing: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Switch(
+                              value: _notificationsEnabled,
+                              onChanged: _updateNotificationsEnabled,
+                              activeColor: AppTheme.netflixRed,
+                            ),
+                    ),
+                    _buildDivider(),
+                    _buildSettingItem(
+                      icon: Icons.alarm,
+                      title: 'Alarms',
+                      trailing: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Switch(
+                              value: _alarmsEnabled,
+                              onChanged: _updateAlarmsEnabled,
+                              activeColor: AppTheme.netflixRed,
+                            ),
                     ),
                     _buildDivider(),
                     _buildSettingItem(

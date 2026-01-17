@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../services/task_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/sound_picker_widget.dart';
 
 class EditTaskScreen extends StatefulWidget {
   final String taskId;
@@ -25,6 +26,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   
   late String _selectedPriority;
   DateTime? _selectedDateTime;
+  String? _selectedSound;
   bool _isSaving = false;
 
   @override
@@ -45,6 +47,9 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       final timestamp = widget.taskData['dateTime'] as Timestamp;
       _selectedDateTime = timestamp.toDate();
     }
+    
+    // Parse sound path
+    _selectedSound = widget.taskData['soundPath'] as String?;
   }
 
   @override
@@ -134,6 +139,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
         'description': _descriptionController.text.trim(),
         'priority': priority,
         'dateTime': Timestamp.fromDate(_selectedDateTime!),
+        if (_selectedSound != null) 'soundPath': _selectedSound,
       });
 
       if (mounted) {
@@ -290,6 +296,16 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                       ),
                     );
                   }).toList(),
+                ),
+                const SizedBox(height: 20),
+                // Sound Picker
+                SoundPickerWidget(
+                  initialSound: _selectedSound,
+                  onSoundSelected: (sound) {
+                    setState(() {
+                      _selectedSound = sound;
+                    });
+                  },
                 ),
                 const SizedBox(height: 20),
                 // Date & Time Picker

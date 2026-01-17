@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../services/task_scheduler_service.dart';
 import 'task_list_screen.dart';
 import 'dashboard_screen.dart';
 import 'calendar_screen.dart';
@@ -16,6 +17,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
+  final TaskSchedulerService _schedulerService = TaskSchedulerService();
 
   final List<Widget> _screens = [
     const TaskListScreen(),
@@ -24,6 +26,28 @@ class _HomeScreenState extends State<HomeScreen> {
     const SearchScreen(),
     const ProfileScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Start monitoring tasks for notifications/alarms
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _schedulerService.startMonitoring(context);
+    });
+  }
+
+  @override
+  void dispose() {
+    _schedulerService.stopMonitoring();
+    super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Update context for alarm service when navigating
+    _schedulerService.updateContext(context);
+  }
 
   @override
   Widget build(BuildContext context) {

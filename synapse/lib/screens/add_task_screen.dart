@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../services/task_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/sound_picker_widget.dart';
 
 class AddTaskScreen extends StatefulWidget {
   const AddTaskScreen({super.key});
@@ -18,6 +19,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   
   String _selectedPriority = 'Normal';
   DateTime? _selectedDateTime;
+  String? _selectedSound;
   bool _isSaving = false;
 
   @override
@@ -109,6 +111,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         'priority': priority,
         'dateTime': Timestamp.fromDate(_selectedDateTime!),
         'createdAt': Timestamp.fromDate(DateTime.now()),
+        if (_selectedSound != null) 'soundPath': _selectedSound,
       });
 
       if (mounted) {
@@ -265,6 +268,15 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                       ),
                     );
                   }).toList(),
+                ),
+                const SizedBox(height: 20),
+                // Sound Picker
+                SoundPickerWidget(
+                  onSoundSelected: (sound) {
+                    setState(() {
+                      _selectedSound = sound;
+                    });
+                  },
                 ),
                 const SizedBox(height: 20),
                 // Date & Time Picker
