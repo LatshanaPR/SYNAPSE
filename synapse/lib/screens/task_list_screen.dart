@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../services/task_service.dart';
 import '../theme/app_theme.dart';
 import 'sound_settings_screen.dart';
+import 'edit_task_screen.dart';
 
 class TaskListScreen extends StatefulWidget {
   const TaskListScreen({super.key});
@@ -161,7 +162,13 @@ class _TaskListScreenState extends State<TaskListScreen>
                     );
                   }
 
-                  final allDocs = snapshot.data!.docs;
+                  final allDocs = snapshot.data!.docs
+                      .where((doc) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        // Filter out deleted tasks
+                        return data['isDeleted'] != true;
+                      })
+                      .toList();
 
                   return TabBarView(
                     controller: _tabController,
@@ -232,99 +239,168 @@ class _TaskListScreenState extends State<TaskListScreen>
       statusColor = Colors.blue;
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    return GestureDetector(
+      onLongPress: () => _showTaskOptions(context, task, taskId),
+      child: Dismissible(
+        key: Key(taskId),
+        direction: DismissDirection.endToStart,
+        background: Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.red.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(12),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            task['title'] ?? 'Untitled Task',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
+          alignment: Alignment.centerRight,
+          child: const Icon(
+            Icons.delete,
+            color: Colors.white,
+            size: 30,
           ),
-          if (task['description'] != null && task['description'].toString().isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              task['description'],
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[400],
+        ),
+        confirmDismiss: (direction) async {
+          return await _confirmDelete(context, taskId);
+        },
+        onDismissed: (direction) {
+          _deleteTask(taskId);
+        },
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey[900],
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _buildBadge(task['priority'] ?? 'Medium', priorityColor),
-              const SizedBox(width: 8),
-              _buildBadge(statusDisplay, statusColor),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.calendar_today, size: 14, color: Colors.grey[400]),
-              const SizedBox(width: 6),
-              Text(
-                formattedDate,
-                style: TextStyle(fontSize: 12, color: Colors.grey[400]),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      task['title'] ?? 'Untitled Task',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  // Edit Button
+                  IconButton(
+                    icon: const Icon(Icons.edit, color: AppTheme.netflixRed, size: 20),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EditTaskScreen(
+                            taskId: taskId,
+                            taskData: task,
+                          ),
+                        ),
+                      );
+                    },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    tooltip: 'Edit Task',
+                  ),
+                  // Delete Button
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                    onPressed: () async {
+                      final confirmed = await _confirmDelete(context, taskId);
+                      if (confirmed == true) {
+                        _deleteTask(taskId);
+                      }
+                    },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    tooltip: 'Delete Task',
+                  ),
+                ],
               ),
-              const Spacer(),
-              // Status Update Actions
-              if (statusDisplay != 'Complete')
-                TextButton(
-                  onPressed: () => _updateTaskStatus(taskId, 'Complete'),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              if (task['description'] != null && task['description'].toString().isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  task['description'],
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[400],
                   ),
-                  child: Text(
-                    'Complete',
-                    style: TextStyle(
-                      color: Colors.green,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              if (statusDisplay != 'Review')
-                TextButton(
-                  onPressed: () => _updateTaskStatus(taskId, 'Review'),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ],
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  _buildBadge(task['priority'] ?? 'Medium', priorityColor),
+                  const SizedBox(width: 8),
+                  _buildBadge(statusDisplay, statusColor),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(Icons.calendar_today, size: 14, color: Colors.grey[400]),
+                  const SizedBox(width: 6),
+                  Text(
+                    formattedDate,
+                    style: TextStyle(fontSize: 12, color: Colors.grey[400]),
                   ),
-                  child: Text(
-                    'Review',
-                    style: TextStyle(
-                      color: AppTheme.netflixRed,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                  const Spacer(),
+                  // Status Update Actions
+                  if (statusDisplay != 'Complete')
+                    TextButton.icon(
+                      onPressed: () => _updateTaskStatus(taskId, 'Complete'),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      icon: const Icon(Icons.check_circle, size: 16, color: Colors.green),
+                      label: Text(
+                        'Complete',
+                        style: TextStyle(
+                          color: Colors.green,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
+                  if (statusDisplay != 'Review')
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: TextButton.icon(
+                        onPressed: () => _updateTaskStatus(taskId, 'Review'),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        icon: const Icon(Icons.rate_review, size: 16, color: AppTheme.netflixRed),
+                        label: Text(
+                          'Review',
+                          style: TextStyle(
+                            color: AppTheme.netflixRed,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -332,11 +408,125 @@ class _TaskListScreenState extends State<TaskListScreen>
   Future<void> _updateTaskStatus(String taskId, String newStatus) async {
     try {
       await _taskService.updateTaskStatus(taskId, newStatus);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Task moved to $newStatus'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 1),
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error updating task: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showTaskOptions(BuildContext context, Map<String, dynamic> task, String taskId) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.grey[900],
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit, color: AppTheme.netflixRed),
+              title: const Text('Edit Task', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EditTaskScreen(
+                      taskId: taskId,
+                      taskData: task,
+                    ),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete, color: Colors.red),
+              title: const Text('Delete Task', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context);
+                _confirmDelete(context, taskId).then((confirmed) {
+                  if (confirmed == true) {
+                    _deleteTask(taskId);
+                  }
+                });
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<bool?> _confirmDelete(BuildContext context, String taskId) async {
+    return showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          title: const Text(
+            'Delete Task',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: const Text(
+            'Are you sure you want to delete this task?',
+            style: TextStyle(color: Colors.grey),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: Colors.grey[400]),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text(
+                'Delete',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteTask(String taskId) async {
+    try {
+      await _taskService.softDeleteTask(taskId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Task deleted successfully'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting task: $e'),
             backgroundColor: Colors.red,
           ),
         );

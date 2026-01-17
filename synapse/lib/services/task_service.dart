@@ -36,6 +36,7 @@ class TaskService {
       
       // Return a stream that listens to real-time updates
       // Ordered by dateTime timestamp in ascending order (earliest first)
+      // Note: We filter out deleted tasks in the UI layer to avoid index requirements
       return tasksRef.orderBy('dateTime', descending: false).snapshots();
     } catch (e) {
       throw 'Failed to get tasks: ${e.toString()}';
@@ -95,6 +96,12 @@ class TaskService {
         taskData['createdAt'] = FieldValue.serverTimestamp();
       }
       
+      // Set initial updatedAt
+      taskData['updatedAt'] = FieldValue.serverTimestamp();
+      
+      // Set isDeleted to false by default
+      taskData['isDeleted'] = false;
+      
       // Get reference to the tasks collection for the current user
       final CollectionReference tasksRef = _firestore
           .collection('users')
@@ -133,10 +140,90 @@ class TaskService {
           .collection('tasks')
           .doc(taskId);
       
-      // Update only the status field
-      await taskRef.update({'status': status});
+      // Update status and updatedAt fields
+      await taskRef.update({
+        'status': status,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
     } catch (e) {
       throw 'Failed to update task status: ${e.toString()}';
+    }
+  }
+
+  /// Update an existing task with new field values
+  /// 
+  /// [taskId] - The document ID of the task to update
+  /// [updatedFields] - A map of fields to update (title, description, priority, dateTime, etc.)
+  /// 
+  /// Throws an exception if:
+  ///   - User is not signed in
+  ///   - Task update fails
+  Future<void> updateTask(String taskId, Map<String, dynamic> updatedFields) async {
+    try {
+      final String userId = _getCurrentUserId();
+      
+      // Validate updated fields if they're provided
+      if (updatedFields.containsKey('title') && 
+          (updatedFields['title'] == null || (updatedFields['title'] as String).trim().isEmpty)) {
+        throw 'Task title cannot be empty.';
+      }
+      
+      if (updatedFields.containsKey('priority')) {
+        final String priority = updatedFields['priority'];
+        if (priority != 'High' && priority != 'Medium' && priority != 'Low') {
+          throw 'Priority must be one of: High, Medium, or Low.';
+        }
+      }
+      
+      if (updatedFields.containsKey('status')) {
+        final String status = updatedFields['status'];
+        if (status != 'ToDo' && status != 'Complete' && status != 'Review') {
+          throw 'Status must be one of: ToDo, Complete, or Review.';
+        }
+      }
+      
+      // Get reference to the specific task document
+      final DocumentReference taskRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('tasks')
+          .doc(taskId);
+      
+      // Add updatedAt timestamp
+      updatedFields['updatedAt'] = FieldValue.serverTimestamp();
+      
+      // Update the task
+      await taskRef.update(updatedFields);
+    } catch (e) {
+      throw 'Failed to update task: ${e.toString()}';
+    }
+  }
+
+  /// Soft delete a task by setting isDeleted to true
+  /// 
+  /// [taskId] - The document ID of the task to delete
+  /// 
+  /// Throws an exception if:
+  ///   - User is not signed in
+  ///   - Task deletion fails
+  Future<void> softDeleteTask(String taskId) async {
+    try {
+      final String userId = _getCurrentUserId();
+      
+      // Get reference to the specific task document
+      final DocumentReference taskRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('tasks')
+          .doc(taskId);
+      
+      // Soft delete by setting isDeleted to true
+      await taskRef.update({
+        'isDeleted': true,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw 'Failed to delete task: ${e.toString()}';
     }
   }
 }
