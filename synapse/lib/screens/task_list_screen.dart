@@ -1,5 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../services/task_service.dart';
 import '../theme/app_theme.dart';
+import 'sound_settings_screen.dart';
 
 class TaskListScreen extends StatefulWidget {
   const TaskListScreen({super.key});
@@ -8,48 +12,22 @@ class TaskListScreen extends StatefulWidget {
   State<TaskListScreen> createState() => _TaskListScreenState();
 }
 
-class _TaskListScreenState extends State<TaskListScreen> {
-  String _selectedFilter = 'Complete';
+class _TaskListScreenState extends State<TaskListScreen>
+    with SingleTickerProviderStateMixin {
+  final TaskService _taskService = TaskService();
+  late TabController _tabController;
 
-  final List<Map<String, dynamic>> _tasks = [
-    {
-      'title': 'Dashboard design for admin',
-      'priority': 'High',
-      'status': 'On Track',
-      'dueDate': '14 oct 2022',
-      'links': 5,
-      'comments': 5,
-      'users': ['JD', 'JS', 'BW'],
-    },
-    {
-      'title': 'Konom web application',
-      'priority': 'Low',
-      'status': 'Meeting',
-      'dueDate': '14 Nov 2022',
-      'links': 2,
-      'comments': 4,
-      'users': ['AE', 'CC', 'EJ'],
-    },
-    {
-      'title': 'Research and development',
-      'priority': 'Medium',
-      'status': 'At Risk',
-      'dueDate': '14 oct 2022',
-      'links': 6,
-      'comments': 2,
-      'users': ['FM', 'GL'],
-      'hasBorder': true,
-    },
-    {
-      'title': 'Event booking application',
-      'priority': 'Medium',
-      'status': 'Meeting',
-      'dueDate': '14 oct 2022',
-      'links': 5,
-      'comments': 5,
-      'users': ['HC'],
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   Color _getPriorityColor(String priority) {
     switch (priority) {
@@ -78,7 +56,14 @@ class _TaskListScreenState extends State<TaskListScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.menu, color: Colors.white),
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SoundSettingsScreen(),
+                        ),
+                      );
+                    },
                   ),
                   const Expanded(
                     child: Text(
@@ -91,37 +76,111 @@ class _TaskListScreenState extends State<TaskListScreen> {
                       ),
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.arrow_forward, color: Colors.white),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.more_vert, color: Colors.white),
-                    onPressed: () {},
-                  ),
+                  const SizedBox(width: 48), // Spacer to balance the left menu icon
                 ],
               ),
             ),
-            // Filter Chips
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: [
-                  _buildFilterChip('Complete', '65'),
-                  const SizedBox(width: 12),
-                  _buildFilterChip('To Do', '45'),
-                  const SizedBox(width: 12),
-                  _buildFilterChip('In Review', '3'),
+            // Tabs
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              decoration: BoxDecoration(
+                color: Colors.grey[900],
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                indicator: BoxDecoration(
+                  color: AppTheme.netflixRed,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                indicatorSize: TabBarIndicatorSize.tab,
+                dividerColor: Colors.transparent,
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.grey[400],
+                labelStyle: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+                unselectedLabelStyle: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.normal,
+                ),
+                tabs: const [
+                  Tab(text: 'To Do'),
+                  Tab(text: 'Complete'),
+                  Tab(text: 'Review'),
                 ],
               ),
             ),
             const SizedBox(height: 24),
-            // Task List
+            // Task List with StreamBuilder
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: _tasks.length,
-                itemBuilder: (context, index) => _buildTaskCard(_tasks[index]),
+              child: StreamBuilder<QuerySnapshot>(
+                stream: _taskService.getTasks(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        'Error: ${snapshot.error}',
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    );
+                  }
+
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: AppTheme.netflixRed,
+                      ),
+                    );
+                  }
+
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return TabBarView(
+                      controller: _tabController,
+                      children: [
+                        Center(
+                          child: Text(
+                            'No tasks yet',
+                            style: TextStyle(color: Colors.grey[400]),
+                          ),
+                        ),
+                        Center(
+                          child: Text(
+                            'No tasks yet',
+                            style: TextStyle(color: Colors.grey[400]),
+                          ),
+                        ),
+                        Center(
+                          child: Text(
+                            'No tasks yet',
+                            style: TextStyle(color: Colors.grey[400]),
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+
+                  final allDocs = snapshot.data!.docs;
+
+                  return TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildTaskList(allDocs.where((doc) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        return data['status'] == 'ToDo';
+                      }).toList()),
+                      _buildTaskList(allDocs.where((doc) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        return data['status'] == 'Complete';
+                      }).toList()),
+                      _buildTaskList(allDocs.where((doc) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        return data['status'] == 'Review';
+                      }).toList()),
+                    ],
+                  );
+                },
               ),
             ),
           ],
@@ -130,31 +189,48 @@ class _TaskListScreenState extends State<TaskListScreen> {
     );
   }
 
-  Widget _buildFilterChip(String label, String count) {
-    final isSelected = _selectedFilter == label;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedFilter = label),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? AppTheme.netflixRed : Colors.grey[900],
-          borderRadius: BorderRadius.circular(20),
-        ),
+  Widget _buildTaskList(List<QueryDocumentSnapshot> docs) {
+    if (docs.isEmpty) {
+      return Center(
         child: Text(
-          '$label $count',
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.grey[400],
-            fontSize: 14,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-          ),
+          'No tasks yet',
+          style: TextStyle(color: Colors.grey[400]),
         ),
-      ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      itemCount: docs.length,
+      itemBuilder: (context, index) {
+        final doc = docs[index];
+        final data = doc.data() as Map<String, dynamic>;
+        return _buildTaskCard(data, doc.id);
+      },
     );
   }
 
-  Widget _buildTaskCard(Map<String, dynamic> task) {
-    final priorityColor = _getPriorityColor(task['priority']);
-    final hasBorder = task['hasBorder'] ?? false;
+  Widget _buildTaskCard(Map<String, dynamic> task, String taskId) {
+    final priorityColor = _getPriorityColor(task['priority'] ?? 'Medium');
+    
+    // Format dateTime from Firestore Timestamp
+    String formattedDate = 'No date';
+    if (task['dateTime'] != null) {
+      final timestamp = task['dateTime'] as Timestamp;
+      final date = timestamp.toDate();
+      formattedDate = DateFormat('dd MMM yyyy').format(date);
+    }
+
+    // Get status display name
+    String statusDisplay = task['status'] ?? 'ToDo';
+    Color statusColor = Colors.grey[700]!;
+    if (statusDisplay == 'Complete') {
+      statusColor = Colors.green;
+    } else if (statusDisplay == 'Review') {
+      statusColor = AppTheme.netflixRed;
+    } else if (statusDisplay == 'ToDo') {
+      statusColor = Colors.blue;
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -162,7 +238,6 @@ class _TaskListScreenState extends State<TaskListScreen> {
       decoration: BoxDecoration(
         color: Colors.grey[900],
         borderRadius: BorderRadius.circular(12),
-        border: hasBorder ? Border.all(color: Colors.green, width: 1) : null,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.3),
@@ -174,40 +249,32 @@ class _TaskListScreenState extends State<TaskListScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  task['title'],
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.more_vert, color: Colors.grey, size: 20),
-                onPressed: () {},
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-            ],
+          Text(
+            task['title'] ?? 'Untitled Task',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
           ),
+          if (task['description'] != null && task['description'].toString().isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              task['description'],
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[400],
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
           const SizedBox(height: 12),
           Row(
             children: [
-              _buildBadge(task['priority'], priorityColor),
+              _buildBadge(task['priority'] ?? 'Medium', priorityColor),
               const SizedBox(width: 8),
-              _buildBadge(
-                task['status'],
-                task['status'] == 'On Track'
-                    ? Colors.green
-                    : task['status'] == 'At Risk'
-                        ? AppTheme.netflixRed
-                        : Colors.grey[700]!,
-              ),
+              _buildBadge(statusDisplay, statusColor),
             ],
           ),
           const SizedBox(height: 12),
@@ -216,40 +283,65 @@ class _TaskListScreenState extends State<TaskListScreen> {
               Icon(Icons.calendar_today, size: 14, color: Colors.grey[400]),
               const SizedBox(width: 6),
               Text(
-                task['dueDate'],
-                style: TextStyle(fontSize: 12, color: Colors.grey[400]),
-              ),
-              const SizedBox(width: 16),
-              Icon(Icons.link, size: 14, color: Colors.grey[400]),
-              const SizedBox(width: 6),
-              Text(
-                '${task['links']}',
-                style: TextStyle(fontSize: 12, color: Colors.grey[400]),
-              ),
-              const SizedBox(width: 16),
-              Icon(Icons.comment_outlined, size: 14, color: Colors.grey[400]),
-              const SizedBox(width: 6),
-              Text(
-                '${task['comments']}',
+                formattedDate,
                 style: TextStyle(fontSize: 12, color: Colors.grey[400]),
               ),
               const Spacer(),
-              ...(task['users'] as List<String>).map((user) => Padding(
-                    padding: const EdgeInsets.only(left: 4),
-                    child: CircleAvatar(
-                      radius: 12,
-                      backgroundColor: Colors.grey[700],
-                      child: Text(
-                        user,
-                        style: const TextStyle(fontSize: 10, color: Colors.white),
-                      ),
+              // Status Update Actions
+              if (statusDisplay != 'Complete')
+                TextButton(
+                  onPressed: () => _updateTaskStatus(taskId, 'Complete'),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    'Complete',
+                    style: TextStyle(
+                      color: Colors.green,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                     ),
-                  )),
+                  ),
+                ),
+              if (statusDisplay != 'Review')
+                TextButton(
+                  onPressed: () => _updateTaskStatus(taskId, 'Review'),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    'Review',
+                    style: TextStyle(
+                      color: AppTheme.netflixRed,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
             ],
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _updateTaskStatus(String taskId, String newStatus) async {
+    try {
+      await _taskService.updateTaskStatus(taskId, newStatus);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating task: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildBadge(String text, Color color) {

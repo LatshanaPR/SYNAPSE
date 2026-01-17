@@ -5,6 +5,7 @@ import 'dashboard_screen.dart';
 import 'calendar_screen.dart';
 import 'search_screen.dart';
 import 'profile_screen.dart';
+import 'add_task_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -34,7 +35,12 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: _currentIndex == 0
           ? FloatingActionButton(
               onPressed: () {
-                // TODO: Add new task
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AddTaskScreen(),
+                  ),
+                );
               },
               backgroundColor: AppTheme.netflixRed,
               child: const Icon(Icons.add, color: Colors.white),
