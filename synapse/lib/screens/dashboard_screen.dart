@@ -15,6 +15,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final TaskService _taskService = TaskService();
 
   @override
+  void initState() {
+    super.initState();
+    _taskService.runOverdueCheck();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.black,
@@ -68,10 +74,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   return data?['status'] == 'ToDo';
                 })
                 .length;
-            final reviewTasks = tasks
+            final notDoneTasks = tasks
                 .where((task) {
                   final data = task['data'] as Map<String, dynamic>?;
-                  return data?['status'] == 'Review';
+                  final s = data?['status'] as String?;
+                  return s == 'notDone' || s == 'Review';
                 })
                 .length;
 
@@ -115,8 +122,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Expanded(
                         child: _buildSummaryCard(
                           Icons.access_time,
-                          reviewTasks.toString(),
-                          'In Review',
+                          notDoneTasks.toString(),
+                          'Not Done',
                           Colors.orange,
                         ),
                       ),
@@ -193,7 +200,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           children: [
                             _buildLegendItem(Colors.purple, 'Progress'),
                             const SizedBox(width: 20),
-                            _buildLegendItem(Colors.pink, 'Reviewed'),
+                            _buildLegendItem(Colors.pink, 'Not Done'),
                             const SizedBox(width: 20),
                             _buildLegendItem(Colors.green, 'Complete'),
                           ],
@@ -311,21 +318,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     }
 
-    // Calculate heights for each day: [Progress, Reviewed, Complete]
+    // Calculate heights for each day: [Progress, Not Done, Complete]
     final Map<String, List<double>> result = {};
     for (var entry in tasksByDay.entries) {
       final dayTasks = entry.value;
       final progress = dayTasks.where((t) => t['status'] == 'ToDo').length.toDouble();
-      final reviewed = dayTasks.where((t) => t['status'] == 'Review').length.toDouble();
+      final notDone = dayTasks
+          .where((t) => t['status'] == 'notDone' || t['status'] == 'Review')
+          .length
+          .toDouble();
       final complete = dayTasks.where((t) => t['status'] == 'Complete').length.toDouble();
       
       // Normalize to 0-150 range for chart display
-      final max = [progress, reviewed, complete].reduce((a, b) => a > b ? a : b);
+      final max = [progress, notDone, complete].reduce((a, b) => a > b ? a : b);
       final scale = max > 0 ? 150.0 / max : 1.0;
       
       result[entry.key] = [
         progress * scale,
-        reviewed * scale,
+        notDone * scale,
         complete * scale,
       ];
     }
@@ -333,7 +343,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return result;
   }
 
-  /// Get upcoming tasks (next 4 tasks by dateTime)
+  /// Get upcoming tasks (next 4 tasks by effectiveDueTime)
   List<Map<String, dynamic>> _getUpcomingTasks(List<Map<String, dynamic>> tasks) {
     final now = DateTime.now();
     
@@ -341,23 +351,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
         .where((task) {
           final data = task['data'] as Map<String, dynamic>;
           final status = data['status'] as String?;
-          final dateTime = (data['dateTime'] as Timestamp?)?.toDate();
-          
-          // Get tasks that are not completed and have a future dateTime
-          return status != 'Complete' && 
-                 dateTime != null && 
-                 dateTime.isAfter(now);
+          final effectiveDue = TaskService.getEffectiveDueTime(data);
+          if (effectiveDue == null) return false;
+          return status != 'Complete' &&
+                 status != 'notDone' &&
+                 status != 'Review' &&
+                 effectiveDue.isAfter(now);
         })
         .toList();
 
-    // Sort by dateTime (ascending)
+    // Sort by effectiveDueTime (ascending)
     upcoming.sort((a, b) {
-      final dateA = (a['data'] as Map<String, dynamic>)['dateTime'] as Timestamp?;
-      final dateB = (b['data'] as Map<String, dynamic>)['dateTime'] as Timestamp?;
-      if (dateA == null && dateB == null) return 0;
-      if (dateA == null) return 1;
-      if (dateB == null) return -1;
-      return dateA.compareTo(dateB);
+      final dueA = TaskService.getEffectiveDueTime(a['data'] as Map<String, dynamic>);
+      final dueB = TaskService.getEffectiveDueTime(b['data'] as Map<String, dynamic>);
+      if (dueA == null && dueB == null) return 0;
+      if (dueA == null) return 1;
+      if (dueB == null) return -1;
+      return dueA.compareTo(dueB);
     });
 
     return upcoming.take(4).toList();
@@ -366,7 +376,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   /// Build upcoming task card
   Widget _buildUpcomingTaskCard(String taskId, Map<String, dynamic> task) {
     final title = task['title'] as String? ?? 'Untitled';
-    final dateTime = (task['dateTime'] as Timestamp?)?.toDate();
+    final dateTime = TaskService.getEffectiveDueTime(task);
     final priority = task['priority'] as String? ?? 'Medium';
     
     String dateStr = 'No date';

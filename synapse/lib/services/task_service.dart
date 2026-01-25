@@ -43,6 +43,50 @@ class TaskService {
     }
   }
 
+  /// One-time fetch of tasks (for overdue check). Uses same ordering as getTasks().
+  Future<QuerySnapshot> _getTasksSnapshot() async {
+    final String userId = _getCurrentUserId();
+    final tasksRef = _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('tasks');
+    return tasksRef.orderBy('dateTime', descending: false).get();
+  }
+
+  /// effectiveDueTime = snoozedUntil ?? dateTime. Returns null if both missing.
+  static DateTime? getEffectiveDueTime(Map<String, dynamic> data) {
+    final dateTime = (data['dateTime'] as Timestamp?)?.toDate();
+    final snoozedUntil = (data['snoozedUntil'] as Timestamp?)?.toDate();
+    if (snoozedUntil != null) return snoozedUntil;
+    return dateTime;
+  }
+
+  /// Run overdue check: if status != Complete and now > effectiveDueTime, set status = notDone.
+  /// Call on app start, when opening task list/dashboard, and when tasks are fetched.
+  Future<void> runOverdueCheck() async {
+    try {
+      final snapshot = await _getTasksSnapshot();
+      final now = DateTime.now();
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        if (data['isDeleted'] == true) continue;
+
+        final status = data['status'] as String? ?? 'ToDo';
+        if (status == 'Complete') continue;
+
+        final effectiveDue = getEffectiveDueTime(data);
+        if (effectiveDue == null) continue;
+        if (now.isBefore(effectiveDue) || now.isAtSameMomentAs(effectiveDue)) continue;
+
+        await updateTask(doc.id, {'status': 'notDone'});
+      }
+    } catch (e) {
+      // Non-blocking; log and continue
+      print('[TaskService] runOverdueCheck error: $e');
+    }
+  }
+
   /// Add a new task to Firestore
   /// 
   /// [taskData] - A map containing task information:
@@ -81,8 +125,8 @@ class TaskService {
       
       // Validate status value
       final String status = taskData['status'];
-      if (status != 'ToDo' && status != 'Complete' && status != 'Review') {
-        throw 'Status must be one of: ToDo, Complete, or Review.';
+      if (status != 'ToDo' && status != 'Complete' && status != 'Review' && status != 'notDone') {
+        throw 'Status must be one of: ToDo, Complete, Review, or notDone.';
       }
       
       // Validate priority value
@@ -129,8 +173,8 @@ class TaskService {
       final String userId = _getCurrentUserId();
       
       // Validate status value
-      if (status != 'ToDo' && status != 'Complete' && status != 'Review') {
-        throw 'Status must be one of: ToDo, Complete, or Review.';
+      if (status != 'ToDo' && status != 'Complete' && status != 'Review' && status != 'notDone') {
+        throw 'Status must be one of: ToDo, Complete, Review, or notDone.';
       }
       
       // Get reference to the specific task document
@@ -177,8 +221,8 @@ class TaskService {
       
       if (updatedFields.containsKey('status')) {
         final String status = updatedFields['status'];
-        if (status != 'ToDo' && status != 'Complete' && status != 'Review') {
-          throw 'Status must be one of: ToDo, Complete, or Review.';
+        if (status != 'ToDo' && status != 'Complete' && status != 'Review' && status != 'notDone') {
+          throw 'Status must be one of: ToDo, Complete, Review, or notDone.';
         }
       }
       

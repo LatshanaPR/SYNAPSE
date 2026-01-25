@@ -17,11 +17,13 @@ class _TaskListScreenState extends State<TaskListScreen>
     with SingleTickerProviderStateMixin {
   final TaskService _taskService = TaskService();
   late TabController _tabController;
+  bool _hasRunOverdueOnFetch = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _taskService.runOverdueCheck();
   }
 
   @override
@@ -108,8 +110,8 @@ class _TaskListScreenState extends State<TaskListScreen>
                 ),
                 tabs: const [
                   Tab(text: 'To Do'),
-                  Tab(text: 'Complete'),
-                  Tab(text: 'Review'),
+                  Tab(text: 'Completed'),
+                  Tab(text: 'Not Done'),
                 ],
               ),
             ),
@@ -162,6 +164,14 @@ class _TaskListScreenState extends State<TaskListScreen>
                     );
                   }
 
+                  if (!_hasRunOverdueOnFetch && snapshot.hasData) {
+                    _hasRunOverdueOnFetch = true;
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (!mounted) return;
+                      _taskService.runOverdueCheck();
+                    });
+                  }
+
                   final allDocs = snapshot.data!.docs
                       .where((doc) {
                         final data = doc.data() as Map<String, dynamic>;
@@ -175,7 +185,14 @@ class _TaskListScreenState extends State<TaskListScreen>
                     children: [
                       _buildTaskList(allDocs.where((doc) {
                         final data = doc.data() as Map<String, dynamic>;
-                        return data['status'] == 'ToDo';
+                        final status = data['status'] as String? ?? 'ToDo';
+                        if (status == 'Complete' ||
+                            status == 'notDone' ||
+                            status == 'Review') return false;
+                        final effectiveDue = TaskService.getEffectiveDueTime(data);
+                        if (effectiveDue == null) return false;
+                        return DateTime.now().isBefore(effectiveDue) ||
+                            DateTime.now().isAtSameMomentAs(effectiveDue);
                       }).toList()),
                       _buildTaskList(allDocs.where((doc) {
                         final data = doc.data() as Map<String, dynamic>;
@@ -183,7 +200,8 @@ class _TaskListScreenState extends State<TaskListScreen>
                       }).toList()),
                       _buildTaskList(allDocs.where((doc) {
                         final data = doc.data() as Map<String, dynamic>;
-                        return data['status'] == 'Review';
+                        final s = data['status'] as String?;
+                        return s == 'notDone' || s == 'Review';
                       }).toList()),
                     ],
                   );
@@ -271,7 +289,7 @@ class _TaskListScreenState extends State<TaskListScreen>
     Color statusColor = Colors.grey[700]!;
     if (statusDisplay == 'Complete') {
       statusColor = Colors.green;
-    } else if (statusDisplay == 'Review') {
+    } else if (statusDisplay == 'notDone' || statusDisplay == 'Review') {
       statusColor = AppTheme.netflixRed;
     } else if (statusDisplay == 'ToDo') {
       statusColor = Colors.blue;
@@ -381,7 +399,12 @@ class _TaskListScreenState extends State<TaskListScreen>
                 children: [
                   _buildBadge(task['priority'] ?? 'Medium', priorityColor),
                   const SizedBox(width: 8),
-                  _buildBadge(statusDisplay, statusColor),
+                  _buildBadge(
+                    statusDisplay == 'notDone' || statusDisplay == 'Review'
+                        ? 'Not Done'
+                        : statusDisplay,
+                    statusColor,
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -469,19 +492,19 @@ class _TaskListScreenState extends State<TaskListScreen>
                         ),
                       ),
                     ),
-                  if (statusDisplay != 'Review')
+                  if (statusDisplay != 'notDone' && statusDisplay != 'Review')
                     Padding(
                       padding: const EdgeInsets.only(left: 8),
                       child: TextButton.icon(
-                        onPressed: () => _updateTaskStatus(taskId, 'Review'),
+                        onPressed: () => _updateTaskStatus(taskId, 'notDone'),
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                           minimumSize: Size.zero,
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
-                        icon: const Icon(Icons.rate_review, size: 16, color: AppTheme.netflixRed),
+                        icon: const Icon(Icons.cancel_outlined, size: 16, color: AppTheme.netflixRed),
                         label: Text(
-                          'Review',
+                          'Not Done',
                           style: TextStyle(
                             color: AppTheme.netflixRed,
                             fontSize: 12,
