@@ -228,6 +228,44 @@ class _TaskListScreenState extends State<TaskListScreen>
       formattedDate = DateFormat('dd MMM yyyy').format(date);
     }
 
+    // Check if task is snoozed - show indicator if snoozedUntil is in the future
+    String? snoozedUntilText;
+    final snoozedUntilValue = task['snoozedUntil'];
+    
+    // Show snooze indicator if snoozedUntil exists and is in the future
+    // Don't require isSnoozed flag - just check if snoozedUntil is valid and future
+    if (snoozedUntilValue != null) {
+      try {
+        Timestamp snoozedUntil;
+        if (snoozedUntilValue is Timestamp) {
+          snoozedUntil = snoozedUntilValue;
+        } else if (snoozedUntilValue is Map) {
+          // Handle Firestore Timestamp format
+          snoozedUntil = Timestamp.fromMillisecondsSinceEpoch(
+            (snoozedUntilValue['_seconds'] as int) * 1000 +
+            ((snoozedUntilValue['_nanoseconds'] as int? ?? 0) / 1000000).round(),
+          );
+        } else {
+          snoozedUntil = snoozedUntilValue as Timestamp;
+        }
+        
+        final snoozedDate = snoozedUntil.toDate();
+        final now = DateTime.now();
+        if (snoozedDate.isAfter(now)) {
+          // Format: "Snoozed until HH:MM" as requested
+          final timeFormat = DateFormat('HH:mm');
+          snoozedUntilText = 'Snoozed until ${timeFormat.format(snoozedDate)}';
+          print('[UI] Snooze indicator will show: $snoozedUntilText');
+        } else {
+          print('[UI] SnoozedUntil is in the past: $snoozedDate (now: $now)');
+        }
+      } catch (e) {
+        print('[UI] Error parsing snoozedUntil: $e, value: $snoozedUntilValue');
+      }
+    } else {
+      print('[UI] No snoozedUntil value found for task: ${task['title']}');
+    }
+
     // Get status display name
     String statusDisplay = task['status'] ?? 'ToDo';
     Color statusColor = Colors.grey[700]!;
@@ -347,6 +385,62 @@ class _TaskListScreenState extends State<TaskListScreen>
                 ],
               ),
               const SizedBox(height: 12),
+              // Show snooze indicator if snoozedUntil is in the future (with bell icon)
+              if (snoozedUntilText != null) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.orange.withOpacity(0.5)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.notifications, size: 14, color: Colors.orange),
+                      const SizedBox(width: 6),
+                      Text(
+                        snoozedUntilText,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.orange,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+              // Show warning banner if snoozed more than 5 times
+              if (task['snoozeCount'] != null && (task['snoozeCount'] as int) >= 5) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.red.withOpacity(0.5)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.warning, size: 14, color: Colors.red[300]),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          'Snoozed ${task['snoozeCount']} times. Consider rescheduling this task.',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.red[300],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
               Row(
                 children: [
                   Icon(Icons.calendar_today, size: 14, color: Colors.grey[400]),

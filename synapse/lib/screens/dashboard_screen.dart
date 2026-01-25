@@ -162,22 +162,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Project Statistics',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.more_vert, color: Colors.grey),
-                              onPressed: () {},
-                            ),
-                          ],
+                        const Text(
+                          'Project Statistics',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
                         ),
                         const SizedBox(height: 24),
                         SizedBox(
@@ -212,22 +203,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 24),
                   // Upcoming Tasks Section
-                  if (upcomingTasks.isNotEmpty) ...[
-                    const Text(
-                      'Upcoming Tasks',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
+                  const Text(
+                    'Upcoming Tasks',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
                     ),
-                    const SizedBox(height: 16),
+                  ),
+                  const SizedBox(height: 16),
+                  if (upcomingTasks.isNotEmpty) ...[
                     ...upcomingTasks.take(4).map((task) => _buildUpcomingTaskCard(
                           task['id'] as String,
                           task['data'] as Map<String, dynamic>,
                         )),
-                    const SizedBox(height: 24),
+                  ] else ...[
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[900],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'No upcoming tasks',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[400],
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
+                  const SizedBox(height: 24),
                   // Bottom Metrics
                   Row(
                     children: [

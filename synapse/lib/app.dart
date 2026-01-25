@@ -3,6 +3,7 @@ import 'screens/auth_gate.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'theme/app_theme.dart';
+import 'services/app_messenger.dart';
 
 class SynapseApp extends StatelessWidget {
   const SynapseApp({super.key});
@@ -13,6 +14,7 @@ class SynapseApp extends StatelessWidget {
       title: 'Synapse',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
+      scaffoldMessengerKey: AppMessenger.scaffoldMessengerKey,
       home: const AuthGate(),
       routes: {
         '/login': (context) => const LoginScreen(),

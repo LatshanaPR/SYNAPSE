@@ -217,13 +217,20 @@ class _AlarmDialogState extends State<_AlarmDialog> with SingleTickerProviderSta
                       ),
                     ),
                   const SizedBox(height: 60),
-                  // Snooze Buttons
-                  Row(
+                  // Snooze Buttons - 10 min, 30 min, 1 hour
+                  Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildSnoozeButton('5 min', const Duration(minutes: 5)),
-                      const SizedBox(width: 16),
-                      _buildSnoozeButton('10 min', const Duration(minutes: 10)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildSnoozeButton('10 min', const Duration(minutes: 10)),
+                          const SizedBox(width: 16),
+                          _buildSnoozeButton('30 min', const Duration(minutes: 30)),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _buildSnoozeButton('1 hour', const Duration(minutes: 60)),
                     ],
                   ),
                   const SizedBox(height: 24),
