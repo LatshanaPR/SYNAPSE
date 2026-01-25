@@ -618,6 +618,95 @@ class NotificationService {
     await _notifications.cancelAll();
   }
 
+  /// Cancel pre-reminder notification for a task
+  Future<void> cancelPreReminder(String taskId) async {
+    await _notifications.cancel(taskId.hashCode + 2);
+  }
+
+  /// Schedule a "2 days before" pre-reminder notification.
+  /// Uses separate notification ID (taskId.hashCode + 2) to avoid conflicts.
+  /// Does NOT include snooze actions - this is just a heads-up reminder.
+  /// Only schedules if dueDateTime is at least 2 days in the future.
+  Future<void> schedulePreReminder({
+    required String taskId,
+    required String title,
+    String? description,
+    required DateTime dueDateTime,
+  }) async {
+    if (!_initialized) {
+      await initialize();
+    }
+
+    final preReminderTime = dueDateTime.subtract(const Duration(days: 2));
+    final now = DateTime.now();
+
+    // Only schedule if pre-reminder time is in the future
+    if (!preReminderTime.isAfter(now)) {
+      print('[PRE-REMINDER] Skipping: due time is less than 2 days away');
+      return;
+    }
+
+    // Cancel any existing pre-reminder for this task
+    await cancelPreReminder(taskId);
+
+    // Use separate notification ID: taskId.hashCode + 2
+    final notificationId = taskId.hashCode + 2;
+
+    // Simple notification details WITHOUT snooze actions
+    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'pre_reminders',
+      'Pre-Reminders',
+      channelDescription: 'Reminder notifications 2 days before task deadline',
+      importance: Importance.high,
+      priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
+      // NO actions - this is just a heads-up, not a snooze-able notification
+    );
+
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    try {
+      await _notifications.zonedSchedule(
+        notificationId,
+        '2 days left: $title',
+        description ?? 'Your task is due in 2 days',
+        _convertToTZDateTime(preReminderTime),
+        details,
+        payload: '$taskId|preReminder', // Mark as pre-reminder in payload
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      );
+      print('[PRE-REMINDER] Scheduled for taskId=$taskId at $preReminderTime');
+    } on PlatformException catch (e) {
+      if (e.code == 'exact_alarms_not_permitted') {
+        // Fallback to inexact
+        await _notifications.zonedSchedule(
+          notificationId,
+          '2 days left: $title',
+          description ?? 'Your task is due in 2 days',
+          _convertToTZDateTime(preReminderTime),
+          details,
+          payload: '$taskId|preReminder',
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        );
+        print('[PRE-REMINDER] Scheduled (inexact) for taskId=$taskId');
+      } else {
+        print('[PRE-REMINDER] Error: ${e.code} - ${e.message}');
+      }
+    }
+  }
+
   /// Schedule a notification at a specific time
   Future<void> _scheduleNotificationAtTime({
     required String taskId,

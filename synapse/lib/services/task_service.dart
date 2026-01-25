@@ -87,21 +87,9 @@ class TaskService {
     }
   }
 
-  /// Add a new task to Firestore
-  /// 
-  /// [taskData] - A map containing task information:
-  ///   - title (String, required)
-  ///   - description (String, required)
-  ///   - status (String, required - must be: ToDo, Complete, or Review)
-  ///   - priority (String, required - must be: High, Medium, or Low)
-  ///   - dateTime (Timestamp, required)
-  ///   - createdAt (Timestamp, optional - will be set to current time if not provided)
-  /// 
-  /// Throws an exception if:
-  ///   - User is not signed in
-  ///   - Required fields are missing
-  ///   - Task creation fails
-  Future<void> addTask(Map<String, dynamic> taskData) async {
+  /// Add a new task to Firestore.
+  /// Returns the new document ID.
+  Future<String> addTask(Map<String, dynamic> taskData) async {
     try {
       final String userId = _getCurrentUserId();
       
@@ -153,7 +141,8 @@ class TaskService {
           .collection('tasks');
       
       // Add the task to Firestore (document ID will be auto-generated)
-      await tasksRef.add(taskData);
+      final docRef = await tasksRef.add(taskData);
+      return docRef.id;
     } catch (e) {
       throw 'Failed to add task: ${e.toString()}';
     }

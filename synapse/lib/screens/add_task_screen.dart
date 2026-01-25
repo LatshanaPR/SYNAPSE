@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../services/notification_service.dart';
 import '../services/task_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/sound_picker_widget.dart';
@@ -16,6 +17,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final TaskService _taskService = TaskService();
+  final NotificationService _notificationService = NotificationService();
   
   String _selectedPriority = 'Normal';
   DateTime? _selectedDateTime;
@@ -103,16 +105,31 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     try {
       // Map "Normal" priority to "Medium" for Firestore compatibility
       final String priority = _selectedPriority == 'Normal' ? 'Medium' : 'High';
+      final String title = _titleController.text.trim();
+      final String description = _descriptionController.text.trim();
+      final DateTime dueDateTime = _selectedDateTime!;
 
-      await _taskService.addTask({
-        'title': _titleController.text.trim(),
-        'description': _descriptionController.text.trim(),
+      final taskId = await _taskService.addTask({
+        'title': title,
+        'description': description,
         'status': 'ToDo',
         'priority': priority,
-        'dateTime': Timestamp.fromDate(_selectedDateTime!),
+        'dateTime': Timestamp.fromDate(dueDateTime),
         'createdAt': Timestamp.fromDate(DateTime.now()),
         if (_selectedSound != null) 'soundPath': _selectedSound,
       });
+
+      // Schedule pre-reminder (2 days before) - only if due time is at least 2 days away
+      try {
+        await _notificationService.schedulePreReminder(
+          taskId: taskId,
+          title: title,
+          description: description,
+          dueDateTime: dueDateTime,
+        );
+      } catch (_) {
+        // Non-blocking - pre-reminder is optional
+      }
 
       if (mounted) {
         Navigator.of(context).pop();

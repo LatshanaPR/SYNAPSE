@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../services/notification_service.dart';
 import '../services/task_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/sound_picker_widget.dart';
@@ -23,6 +24,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
   final TaskService _taskService = TaskService();
+  final NotificationService _notificationService = NotificationService();
   
   late String _selectedPriority;
   DateTime? _selectedDateTime;
@@ -133,14 +135,29 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     try {
       // Map "Normal" priority to "Medium" for Firestore compatibility
       final String priority = _selectedPriority == 'Normal' ? 'Medium' : 'High';
+      final String title = _titleController.text.trim();
+      final String description = _descriptionController.text.trim();
+      final DateTime dueDateTime = _selectedDateTime!;
 
       await _taskService.updateTask(widget.taskId, {
-        'title': _titleController.text.trim(),
-        'description': _descriptionController.text.trim(),
+        'title': title,
+        'description': description,
         'priority': priority,
-        'dateTime': Timestamp.fromDate(_selectedDateTime!),
+        'dateTime': Timestamp.fromDate(dueDateTime),
         if (_selectedSound != null) 'soundPath': _selectedSound,
       });
+
+      // Re-schedule pre-reminder (2 days before) in case due date changed
+      try {
+        await _notificationService.schedulePreReminder(
+          taskId: widget.taskId,
+          title: title,
+          description: description,
+          dueDateTime: dueDateTime,
+        );
+      } catch (_) {
+        // Non-blocking - pre-reminder is optional
+      }
 
       if (mounted) {
         Navigator.of(context).pop();

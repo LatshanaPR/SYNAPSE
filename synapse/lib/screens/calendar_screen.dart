@@ -1,4 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../services/task_service.dart';
 import '../theme/app_theme.dart';
 
 class CalendarScreen extends StatefulWidget {
@@ -9,39 +12,43 @@ class CalendarScreen extends StatefulWidget {
 }
 
 class _CalendarScreenState extends State<CalendarScreen> {
-  DateTime _selectedDate = DateTime(2026, 1, 11);
-  DateTime _currentMonth = DateTime(2026, 1);
+  final TaskService _taskService = TaskService();
+  late DateTime _selectedDate;
+  late DateTime _currentMonth;
 
-  final List<Map<String, dynamic>> _reminders = [
-    {
-      'title': 'Team standup meeting',
-      'time': '9:00 AM',
-      'isSoon': true,
-    },
-    {
-      'title': 'Design review with stakeholders',
-      'time': '11:30 AM',
-      'isSoon': true,
-    },
-    {
-      'title': 'Submit weekly report',
-      'time': '3:00 PM',
-      'isSoon': false,
-    },
-    {
-      'title': 'One-on-one with manager',
-      'time': '4:30 PM',
-      'isSoon': false,
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _selectedDate = DateTime(now.year, now.month, now.day);
+    _currentMonth = DateTime(now.year, now.month);
+  }
 
-  List<DateTime> _getDatesWithEvents() {
-    return [
-      DateTime(2026, 1, 12),
-      DateTime(2026, 1, 15),
-      DateTime(2026, 1, 18),
-      DateTime(2026, 1, 22),
-    ];
+  /// Check if task falls within 14-day window from today and has status 'ToDo'
+  bool _isInUpcomingWindow(Map<String, dynamic> data) {
+    if (data['isDeleted'] == true) return false;
+    final status = data['status'] as String? ?? 'ToDo';
+    if (status != 'ToDo') return false;
+
+    final dt = (data['dateTime'] as Timestamp?)?.toDate();
+    if (dt == null) return false;
+
+    final now = DateTime.now();
+    final startOfToday = DateTime(now.year, now.month, now.day);
+    final endOf14Days = startOfToday.add(const Duration(days: 14, hours: 23, minutes: 59, seconds: 59));
+
+    return !dt.isBefore(startOfToday) && !dt.isAfter(endOf14Days);
+  }
+
+  /// Check if due within 24 hours
+  bool _isSoon(DateTime dueAt) {
+    final now = DateTime.now();
+    final in24h = now.add(const Duration(hours: 24));
+    return !dueAt.isBefore(now) && !dueAt.isAfter(in24h);
+  }
+
+  String _formatTime(DateTime d) {
+    return DateFormat('h:mm a').format(d);
   }
 
   String _getMonthName(DateTime date) {
@@ -81,59 +88,79 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 style: TextStyle(fontSize: 14, color: Colors.grey[400]),
               ),
               const SizedBox(height: 24),
-              // Calendar Card
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.grey[900],
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '${_getMonthName(_currentMonth)} ${_currentMonth.year}',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.chevron_left, color: Colors.white),
-                              onPressed: () {
-                                setState(() {
-                                  _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1);
-                                });
-                              },
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.chevron_right, color: Colors.white),
-                              onPressed: () {
-                                setState(() {
-                                  _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1);
-                                });
-                              },
-                            ),
-                          ],
+              // Calendar Card with StreamBuilder for event dots
+              StreamBuilder<QuerySnapshot>(
+                stream: _taskService.getTasks(),
+                builder: (context, snapshot) {
+                  List<DateTime> datesWithEvents = [];
+                  if (snapshot.hasData) {
+                    for (var doc in snapshot.data!.docs) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      if (data['isDeleted'] == true) continue;
+                      if ((data['status'] as String? ?? 'ToDo') != 'ToDo') continue;
+                      final dt = (data['dateTime'] as Timestamp?)?.toDate();
+                      if (dt != null) {
+                        final d = DateTime(dt.year, dt.month, dt.day);
+                        if (!datesWithEvents.any((x) => x.year == d.year && x.month == d.month && x.day == d.day)) {
+                          datesWithEvents.add(d);
+                        }
+                      }
+                    }
+                  }
+                  return Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[900],
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
-                    _buildCalendar(),
-                  ],
-                ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '${_getMonthName(_currentMonth)} ${_currentMonth.year}',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.chevron_left, color: Colors.white),
+                                  onPressed: () {
+                                    setState(() {
+                                      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1);
+                                    });
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.chevron_right, color: Colors.white),
+                                  onPressed: () {
+                                    setState(() {
+                                      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1);
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        _buildCalendar(datesWithEvents),
+                      ],
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 32),
               // Reminders
@@ -155,7 +182,49 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              ..._reminders.map((r) => _buildReminderCard(r)),
+              StreamBuilder<QuerySnapshot>(
+                stream: _taskService.getTasks(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Text(
+                      'Couldn\'t load reminders.',
+                      style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+                    );
+                  }
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.netflixRed),
+                      ),
+                    );
+                  }
+                  final docs = snapshot.data?.docs ?? [];
+                  final reminders = <Map<String, dynamic>>[];
+                  for (var doc in docs) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    if (!_isInUpcomingWindow(data)) continue;
+                    final dt = (data['dateTime'] as Timestamp).toDate();
+                    reminders.add({
+                      'title': data['title'] as String? ?? 'Untitled',
+                      'time': _formatTime(dt),
+                      'isSoon': _isSoon(dt),
+                      '_dateTime': dt,
+                    });
+                  }
+                  reminders.sort((a, b) => (a['_dateTime'] as DateTime).compareTo(b['_dateTime'] as DateTime));
+                  if (reminders.isEmpty) {
+                    return Text(
+                      'No upcoming reminders',
+                      style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+                    );
+                  }
+                  return Column(
+                    children: reminders.map((r) => _buildReminderCard(r)).toList(),
+                  );
+                },
+              ),
               const SizedBox(height: 24),
             ],
           ),
@@ -164,11 +233,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  Widget _buildCalendar() {
+  Widget _buildCalendar(List<DateTime> datesWithEvents) {
     final firstDay = DateTime(_currentMonth.year, _currentMonth.month, 1);
     final lastDay = DateTime(_currentMonth.year, _currentMonth.month + 1, 0);
     final firstWeekday = firstDay.weekday % 7;
-    final datesWithEvents = _getDatesWithEvents();
 
     final List<Widget> weeks = [];
     List<Widget> currentWeek = [];
