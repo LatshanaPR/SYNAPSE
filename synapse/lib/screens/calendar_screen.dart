@@ -40,11 +40,27 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return !dt.isBefore(startOfToday) && !dt.isAfter(endOf14Days);
   }
 
-  /// Check if due within 24 hours
-  bool _isSoon(DateTime dueAt) {
+  /// Calculate days left until due date
+  /// Returns: 0 = Today, 1 = Tomorrow, 2+ = X days left, -1 = overdue
+  int _getDaysLeft(DateTime dueAt) {
     final now = DateTime.now();
-    final in24h = now.add(const Duration(hours: 24));
-    return !dueAt.isBefore(now) && !dueAt.isAfter(in24h);
+    final today = DateTime(now.year, now.month, now.day);
+    final dueDay = DateTime(dueAt.year, dueAt.month, dueAt.day);
+    return dueDay.difference(today).inDays;
+  }
+
+  /// Get badge text based on days left
+  String? _getBadgeText(int daysLeft) {
+    if (daysLeft < 0) return 'Overdue';
+    if (daysLeft == 0) return 'Today';
+    if (daysLeft == 1) return 'Tomorrow';
+    if (daysLeft <= 3) return '$daysLeft days left';
+    return null; // No badge for tasks more than 3 days away
+  }
+
+  /// Check if task should show urgent badge (due within 3 days)
+  bool _isUrgent(int daysLeft) {
+    return daysLeft <= 3;
   }
 
   String _formatTime(DateTime d) {
@@ -206,10 +222,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     final data = doc.data() as Map<String, dynamic>;
                     if (!_isInUpcomingWindow(data)) continue;
                     final dt = (data['dateTime'] as Timestamp).toDate();
+                    final daysLeft = _getDaysLeft(dt);
                     reminders.add({
                       'title': data['title'] as String? ?? 'Untitled',
                       'time': _formatTime(dt),
-                      'isSoon': _isSoon(dt),
+                      'daysLeft': daysLeft,
+                      'badgeText': _getBadgeText(daysLeft),
+                      'isUrgent': _isUrgent(daysLeft),
                       '_dateTime': dt,
                     });
                   }
@@ -324,14 +343,29 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Widget _buildReminderCard(Map<String, dynamic> reminder) {
-    final isSoon = reminder['isSoon'] as bool;
+    final isUrgent = reminder['isUrgent'] as bool;
+    final badgeText = reminder['badgeText'] as String?;
+    final daysLeft = reminder['daysLeft'] as int;
+
+    // Badge color based on urgency
+    Color badgeColor;
+    if (daysLeft < 0) {
+      badgeColor = Colors.red.shade700; // Overdue
+    } else if (daysLeft == 0) {
+      badgeColor = AppTheme.netflixRed; // Today - most urgent
+    } else if (daysLeft == 1) {
+      badgeColor = Colors.orange.shade700; // Tomorrow
+    } else {
+      badgeColor = Colors.amber.shade700; // 2-3 days
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.grey[900],
         borderRadius: BorderRadius.circular(12),
-        border: isSoon ? Border.all(color: AppTheme.netflixRed.withOpacity(0.5), width: 1) : null,
+        border: isUrgent ? Border.all(color: badgeColor.withOpacity(0.5), width: 1) : null,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.3),
@@ -347,13 +381,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: isSoon ? AppTheme.netflixRed : Colors.grey[700]!,
+                color: isUrgent ? badgeColor : Colors.grey[700]!,
                 width: 2,
               ),
             ),
             child: Icon(
               Icons.notifications_outlined,
-              color: isSoon ? AppTheme.netflixRed : Colors.grey[500],
+              color: isUrgent ? badgeColor : Colors.grey[500],
               size: 20,
             ),
           ),
@@ -384,16 +418,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ],
             ),
           ),
-          if (isSoon)
+          if (badgeText != null)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: AppTheme.netflixRed,
+                color: badgeColor,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Text(
-                'Soon',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
+              child: Text(
+                badgeText,
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
               ),
             ),
         ],

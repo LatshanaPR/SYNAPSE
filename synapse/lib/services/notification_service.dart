@@ -618,15 +618,15 @@ class NotificationService {
     await _notifications.cancelAll();
   }
 
-  /// Cancel pre-reminder notification for a task
-  Future<void> cancelPreReminder(String taskId) async {
-    await _notifications.cancel(taskId.hashCode + 2);
+  /// Cancel all pre-reminder notifications for a task (2-day and 1-day)
+  Future<void> cancelPreReminders(String taskId) async {
+    await _notifications.cancel(taskId.hashCode + 2); // 2-day reminder
+    await _notifications.cancel(taskId.hashCode + 1); // 1-day reminder
   }
 
-  /// Schedule a "2 days before" pre-reminder notification.
-  /// Uses separate notification ID (taskId.hashCode + 2) to avoid conflicts.
-  /// Does NOT include snooze actions - this is just a heads-up reminder.
-  /// Only schedules if dueDateTime is at least 2 days in the future.
+  /// Schedule pre-reminder notifications (2 days before AND 1 day before).
+  /// Uses separate notification IDs to avoid conflicts with main notification.
+  /// Does NOT include snooze actions - these are just heads-up reminders.
   Future<void> schedulePreReminder({
     required String taskId,
     required String title,
@@ -637,26 +637,16 @@ class NotificationService {
       await initialize();
     }
 
-    final preReminderTime = dueDateTime.subtract(const Duration(days: 2));
+    // Cancel any existing pre-reminders for this task
+    await cancelPreReminders(taskId);
+
     final now = DateTime.now();
-
-    // Only schedule if pre-reminder time is in the future
-    if (!preReminderTime.isAfter(now)) {
-      print('[PRE-REMINDER] Skipping: due time is less than 2 days away');
-      return;
-    }
-
-    // Cancel any existing pre-reminder for this task
-    await cancelPreReminder(taskId);
-
-    // Use separate notification ID: taskId.hashCode + 2
-    final notificationId = taskId.hashCode + 2;
 
     // Simple notification details WITHOUT snooze actions
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'pre_reminders',
       'Pre-Reminders',
-      channelDescription: 'Reminder notifications 2 days before task deadline',
+      channelDescription: 'Reminder notifications before task deadline',
       importance: Importance.high,
       priority: Priority.high,
       playSound: true,
@@ -675,34 +665,65 @@ class NotificationService {
       iOS: iosDetails,
     );
 
-    try {
-      await _notifications.zonedSchedule(
-        notificationId,
-        '2 days left: $title',
-        description ?? 'Your task is due in 2 days',
-        _convertToTZDateTime(preReminderTime),
-        details,
-        payload: '$taskId|preReminder', // Mark as pre-reminder in payload
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-      );
-      print('[PRE-REMINDER] Scheduled for taskId=$taskId at $preReminderTime');
-    } on PlatformException catch (e) {
-      if (e.code == 'exact_alarms_not_permitted') {
-        // Fallback to inexact
+    // Schedule 2-day reminder (if due is at least 2 days away)
+    final twoDaysBefore = dueDateTime.subtract(const Duration(days: 2));
+    if (twoDaysBefore.isAfter(now)) {
+      try {
         await _notifications.zonedSchedule(
-          notificationId,
-          '2 days left: $title',
-          description ?? 'Your task is due in 2 days',
-          _convertToTZDateTime(preReminderTime),
+          taskId.hashCode + 2,
+          '$title - 2 days left',
+          description ?? 'Your task is due in 2 days. Don\'t forget!',
+          _convertToTZDateTime(twoDaysBefore),
           details,
           payload: '$taskId|preReminder',
-          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
         );
-        print('[PRE-REMINDER] Scheduled (inexact) for taskId=$taskId');
-      } else {
-        print('[PRE-REMINDER] Error: ${e.code} - ${e.message}');
+        print('[PRE-REMINDER] 2-day reminder scheduled for taskId=$taskId at $twoDaysBefore');
+      } on PlatformException catch (e) {
+        if (e.code == 'exact_alarms_not_permitted') {
+          await _notifications.zonedSchedule(
+            taskId.hashCode + 2,
+            '$title - 2 days left',
+            description ?? 'Your task is due in 2 days. Don\'t forget!',
+            _convertToTZDateTime(twoDaysBefore),
+            details,
+            payload: '$taskId|preReminder',
+            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+            uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+          );
+        }
+      }
+    }
+
+    // Schedule 1-day reminder (if due is at least 1 day away)
+    final oneDayBefore = dueDateTime.subtract(const Duration(days: 1));
+    if (oneDayBefore.isAfter(now)) {
+      try {
+        await _notifications.zonedSchedule(
+          taskId.hashCode + 1,
+          '$title - Tomorrow',
+          description ?? 'Your task is due tomorrow. Time to wrap it up!',
+          _convertToTZDateTime(oneDayBefore),
+          details,
+          payload: '$taskId|preReminder',
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        );
+        print('[PRE-REMINDER] 1-day reminder scheduled for taskId=$taskId at $oneDayBefore');
+      } on PlatformException catch (e) {
+        if (e.code == 'exact_alarms_not_permitted') {
+          await _notifications.zonedSchedule(
+            taskId.hashCode + 1,
+            '$title - Tomorrow',
+            description ?? 'Your task is due tomorrow. Time to wrap it up!',
+            _convertToTZDateTime(oneDayBefore),
+            details,
+            payload: '$taskId|preReminder',
+            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+            uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+          );
+        }
       }
     }
   }
