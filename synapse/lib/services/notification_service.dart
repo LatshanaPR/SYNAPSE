@@ -5,6 +5,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'dart:io';
 import 'package:flutter/services.dart';
 import 'task_service.dart';
+import 'settings_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
@@ -227,7 +228,17 @@ Future<void> _rescheduleNotificationInBackground(String taskId, Duration snoozeD
 class NotificationService {
   final FlutterLocalNotificationsPlugin _notifications = FlutterLocalNotificationsPlugin();
   final AudioPlayer _audioPlayer = AudioPlayer();
+  final SettingsService _settingsService = SettingsService();
   bool _initialized = false;
+
+  /// Check if notifications are enabled
+  Future<bool> _areNotificationsEnabled() async {
+    try {
+      return await _settingsService.getNotificationsEnabled();
+    } catch (e) {
+      return true; // Default to enabled on error
+    }
+  }
 
   /// Initialize the notification service
   Future<void> initialize() async {
@@ -501,6 +512,12 @@ class NotificationService {
     String? soundPath,
     Function(Duration)? onSnooze,
   }) async {
+    // Check if notifications are enabled
+    if (!await _areNotificationsEnabled()) {
+      print('[NOTIFICATION] Notifications disabled, skipping showTaskNotification');
+      return;
+    }
+
     if (!_initialized) {
       await initialize();
     }
@@ -633,6 +650,12 @@ class NotificationService {
     String? description,
     required DateTime dueDateTime,
   }) async {
+    // Check if notifications are enabled
+    if (!await _areNotificationsEnabled()) {
+      print('[PRE-REMINDER] Notifications disabled, skipping schedulePreReminder');
+      return;
+    }
+
     if (!_initialized) {
       await initialize();
     }
@@ -736,6 +759,12 @@ class NotificationService {
     String? soundPath,
     required DateTime scheduledTime,
   }) async {
+    // Check if notifications are enabled
+    if (!await _areNotificationsEnabled()) {
+      print('[SCHEDULE] Notifications disabled, skipping _scheduleNotificationAtTime');
+      return;
+    }
+
     if (!_initialized) {
       await initialize();
     }

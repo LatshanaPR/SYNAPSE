@@ -34,23 +34,19 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize with existing task data
     _titleController = TextEditingController(text: widget.taskData['title'] ?? '');
     _descriptionController = TextEditingController(
       text: widget.taskData['description'] ?? '',
     );
     
-    // Map priority back to UI format (Medium -> Normal)
     final priority = widget.taskData['priority'] ?? 'Medium';
     _selectedPriority = priority == 'Medium' ? 'Normal' : 'High';
     
-    // Parse dateTime
     if (widget.taskData['dateTime'] != null) {
       final timestamp = widget.taskData['dateTime'] as Timestamp;
       _selectedDateTime = timestamp.toDate();
     }
     
-    // Parse sound path
     _selectedSound = widget.taskData['soundPath'] as String?;
   }
 

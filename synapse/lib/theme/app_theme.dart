@@ -17,4 +17,17 @@ class AppTheme {
       fontFamily: 'Roboto',
     );
   }
+
+  static ThemeData get lightTheme {
+    return ThemeData(
+      brightness: Brightness.light,
+      primaryColor: netflixRed,
+      scaffoldBackgroundColor: Colors.white,
+      colorScheme: const ColorScheme.light(
+        primary: netflixRed,
+        surface: Colors.white,
+      ),
+      fontFamily: 'Roboto',
+    );
+  }
 }

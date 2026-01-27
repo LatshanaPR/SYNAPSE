@@ -45,6 +45,18 @@ class _TaskListScreenState extends State<TaskListScreen>
     }
   }
 
+  void _navigateToEditTask(BuildContext context, String taskId, Map<String, dynamic> task) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditTaskScreen(
+          taskId: taskId,
+          taskData: task,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -563,15 +575,7 @@ class _TaskListScreenState extends State<TaskListScreen>
               title: const Text('Edit Task', style: TextStyle(color: Colors.white)),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => EditTaskScreen(
-                      taskId: taskId,
-                      taskData: task,
-                    ),
-                  ),
-                );
+                _navigateToEditTask(context, taskId, task);
               },
             ),
             ListTile(

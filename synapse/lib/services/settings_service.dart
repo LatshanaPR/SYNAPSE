@@ -78,6 +78,33 @@ class SettingsService {
     }
   }
 
+  /// Get dark mode enabled status
+  /// Returns true by default if not set
+  Future<bool> getDarkModeEnabled() async {
+    try {
+      final doc = await _getSettingsRef().get();
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data() as Map<String, dynamic>;
+        return data['darkModeEnabled'] ?? true;
+      }
+      return true; // Default to dark mode
+    } catch (e) {
+      return true; // Default to dark mode on error
+    }
+  }
+
+  /// Set dark mode enabled status
+  Future<void> setDarkModeEnabled(bool enabled) async {
+    try {
+      await _getSettingsRef().set({
+        'darkModeEnabled': enabled,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      throw 'Failed to update dark mode settings: ${e.toString()}';
+    }
+  }
+
   /// Get stream of settings changes
   Stream<Map<String, dynamic>> getSettingsStream() {
     return _getSettingsRef().snapshots().map((doc) {
@@ -87,6 +114,7 @@ class SettingsService {
       return <String, dynamic>{
         'notificationsEnabled': true,
         'alarmsEnabled': true,
+        'darkModeEnabled': true,
       };
     });
   }
