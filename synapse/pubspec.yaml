@@ -61,6 +61,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
   flutter_native_splash: ^2.4.1
+  flutter_launcher_icons: ^0.14.2
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -110,3 +111,11 @@ flutter_native_splash:
   android: true
   ios: true
   fullscreen: true
+
+# Flutter Launcher Icons configuration
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/logo.png"
+  adaptive_icon_background: "#000000"
+  adaptive_icon_foreground: "assets/logo.png"
