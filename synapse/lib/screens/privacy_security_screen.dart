@@ -6,13 +6,14 @@ class PrivacySecurityScreen extends StatelessWidget {
   const PrivacySecurityScreen({super.key});
 
   Future<void> _handleChangePassword(BuildContext context) async {
+    final colorScheme = Theme.of(context).colorScheme;
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user?.email == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No email found for this account'),
-            backgroundColor: Colors.red,
+          SnackBar(
+            content: const Text('No email found for this account'),
+            backgroundColor: colorScheme.error,
           ),
         );
         return;
@@ -22,9 +23,9 @@ class PrivacySecurityScreen extends StatelessWidget {
       
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Password reset email sent'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('Password reset email sent'),
+            backgroundColor: colorScheme.primary,
           ),
         );
       }
@@ -33,7 +34,7 @@ class PrivacySecurityScreen extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: colorScheme.error,
           ),
         );
       }
@@ -42,14 +43,14 @@ class PrivacySecurityScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? Colors.grey[900] : Colors.grey[100];
-    final cardColor = isDark ? Colors.grey[800] : Colors.white;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final cardColor = colorScheme.surface;
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.black : Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: isDark ? Colors.grey[900] : Colors.white,
+        backgroundColor: colorScheme.surface,
         title: const Text('Privacy & Security'),
       ),
       body: SingleChildScrollView(
@@ -63,7 +64,7 @@ class PrivacySecurityScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: colorScheme.shadow.withOpacity(0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -75,7 +76,7 @@ class PrivacySecurityScreen extends StatelessWidget {
                     leading: const Icon(Icons.lock_outline, color: AppTheme.netflixRed),
                     title: const Text('Change Password'),
                     subtitle: const Text('Send password reset email'),
-                    trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                    trailing: Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
                     onTap: () => _handleChangePassword(context),
                   ),
                 ],

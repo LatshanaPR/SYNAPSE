@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
 import '../services/task_scheduler_service.dart';
 import '../services/task_service.dart';
 import 'task_list_screen.dart';
@@ -54,6 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
@@ -69,8 +69,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 );
               },
-              backgroundColor: AppTheme.netflixRed,
-              child: const Icon(Icons.add, color: Colors.white),
+              backgroundColor: colorScheme.primary,
+              child: Icon(Icons.add, color: colorScheme.onPrimary),
             )
           : null,
       bottomNavigationBar: BottomNavigationBar(
@@ -82,9 +82,9 @@ class _HomeScreenState extends State<HomeScreen> {
           });
         },
         type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.grey[900],
-        selectedItemColor: AppTheme.netflixRed,
-        unselectedItemColor: Colors.grey[500],
+        backgroundColor: colorScheme.surface,
+        selectedItemColor: colorScheme.primary,
+        unselectedItemColor: colorScheme.onSurface.withOpacity(0.5),
         selectedFontSize: 12,
         unselectedFontSize: 12,
         items: [
@@ -100,24 +100,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
   BottomNavigationBarItem _buildNavItem(IconData icon, String label, int index) {
     final isSelected = _currentIndex == index;
+    final colorScheme = Theme.of(context).colorScheme;
     return BottomNavigationBarItem(
       icon: isSelected
           ? Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon),
+                Icon(icon, color: colorScheme.primary),
                 Container(
                   margin: const EdgeInsets.only(top: 4),
                   width: 4,
                   height: 4,
-                  decoration: const BoxDecoration(
-                    color: AppTheme.netflixRed,
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary,
                     shape: BoxShape.circle,
                   ),
                 ),
               ],
             )
-          : Icon(icon),
+          : Icon(icon, color: colorScheme.onSurface.withOpacity(0.5)),
       label: label,
     );
   }

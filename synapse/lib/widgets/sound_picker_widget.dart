@@ -102,22 +102,23 @@ class _SoundPickerWidgetState extends State<SoundPickerWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Notification Sound',
           style: TextStyle(
-            color: Colors.grey[400],
+            color: colorScheme.onSurfaceVariant,
             fontSize: 14,
           ),
         ),
         const SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(
-            color: Colors.grey[900],
+            color: colorScheme.surface,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey[700]!),
+            border: Border.all(color: colorScheme.outline),
           ),
           child: Column(
             children: [
@@ -129,7 +130,7 @@ class _SoundPickerWidgetState extends State<SoundPickerWidget> {
                       title: Text(
                         sound,
                         style: TextStyle(
-                          color: Colors.white,
+                          color: colorScheme.onSurface,
                           fontSize: 16,
                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                         ),
@@ -148,7 +149,7 @@ class _SoundPickerWidgetState extends State<SoundPickerWidget> {
                       Divider(
                         height: 1,
                         thickness: 1,
-                        color: Colors.grey[800],
+                        color: colorScheme.surfaceVariant,
                         indent: 16,
                         endIndent: 16,
                       ),
@@ -159,7 +160,7 @@ class _SoundPickerWidgetState extends State<SoundPickerWidget> {
               Divider(
                 height: 1,
                 thickness: 1,
-                color: Colors.grey[800],
+                color: colorScheme.surfaceVariant,
                 indent: 16,
                 endIndent: 16,
               ),
@@ -169,7 +170,7 @@ class _SoundPickerWidgetState extends State<SoundPickerWidget> {
                       ? 'Custom: ${_customSoundPath!.split('/').last}'
                       : 'Custom Sound',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: colorScheme.onSurface,
                     fontSize: 16,
                     fontWeight: _customSoundPath != null ? FontWeight.w600 : FontWeight.normal,
                   ),
@@ -185,7 +186,7 @@ class _SoundPickerWidgetState extends State<SoundPickerWidget> {
                 selected: _customSoundPath != null,
                 secondary: _customSoundPath != null
                     ? IconButton(
-                        icon: Icon(Icons.close, color: Colors.grey[400]),
+                        icon: Icon(Icons.close, color: colorScheme.onSurfaceVariant),
                         onPressed: () {
                           setState(() {
                             _customSoundPath = null;

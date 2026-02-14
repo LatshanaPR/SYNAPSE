@@ -82,26 +82,29 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Scaffold(
-      backgroundColor: AppTheme.black,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Calendar',
-                style: TextStyle(
-                  fontSize: 28,
+                style: textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 'Plan your schedule',
-                style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+                style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: 24),
               // Calendar Card with StreamBuilder for event dots
@@ -126,11 +129,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   return Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.grey[900],
+                      color: colorScheme.surface,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
+                          color: colorScheme.shadow.withOpacity(0.2),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -143,16 +146,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           children: [
                             Text(
                               '${_getMonthName(_currentMonth)} ${_currentMonth.year}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: colorScheme.onSurface,
                               ),
                             ),
                             Row(
                               children: [
                                 IconButton(
-                                  icon: const Icon(Icons.chevron_left, color: Colors.white),
+                                  icon: Icon(Icons.chevron_left, color: colorScheme.onSurface),
                                   onPressed: () {
                                     setState(() {
                                       _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1);
@@ -160,7 +163,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                   },
                                 ),
                                 IconButton(
-                                  icon: const Icon(Icons.chevron_right, color: Colors.white),
+                                  icon: Icon(Icons.chevron_right, color: colorScheme.onSurface),
                                   onPressed: () {
                                     setState(() {
                                       _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1);
@@ -172,7 +175,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           ],
                         ),
                         const SizedBox(height: 20),
-                        _buildCalendar(datesWithEvents),
+                        _buildCalendar(datesWithEvents, colorScheme),
                       ],
                     ),
                   );
@@ -183,17 +186,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Reminders',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                   Text(
                     '${_getDayName(_selectedDate)}, ${_getMonthName(_selectedDate)} ${_selectedDate.day}',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+                    style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -204,7 +207,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   if (snapshot.hasError) {
                     return Text(
                       'Couldn\'t load reminders.',
-                      style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+                      style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
                     );
                   }
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -236,7 +239,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   if (reminders.isEmpty) {
                     return Text(
                       'No upcoming reminders',
-                      style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+                      style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
                     );
                   }
                   return Column(
@@ -252,7 +255,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  Widget _buildCalendar(List<DateTime> datesWithEvents) {
+  Widget _buildCalendar(List<DateTime> datesWithEvents, ColorScheme colorScheme) {
     final firstDay = DateTime(_currentMonth.year, _currentMonth.month, 1);
     final lastDay = DateTime(_currentMonth.year, _currentMonth.month + 1, 0);
     final firstWeekday = firstDay.weekday % 7;
@@ -289,7 +292,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     '$day',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.white,
+                      color: colorScheme.onSurface,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
@@ -343,6 +346,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Widget _buildReminderCard(Map<String, dynamic> reminder) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final isUrgent = reminder['isUrgent'] as bool;
     final badgeText = reminder['badgeText'] as String?;
     final daysLeft = reminder['daysLeft'] as int;
@@ -363,12 +368,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: isUrgent ? Border.all(color: badgeColor.withOpacity(0.5), width: 1) : null,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: colorScheme.shadow.withOpacity(0.15),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -381,13 +386,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: isUrgent ? badgeColor : Colors.grey[700]!,
+                color: isUrgent ? badgeColor : colorScheme.outline,
                 width: 2,
               ),
             ),
             child: Icon(
               Icons.notifications_outlined,
-              color: isUrgent ? badgeColor : Colors.grey[500],
+              color: isUrgent ? badgeColor : colorScheme.onSurfaceVariant,
               size: 20,
             ),
           ),
@@ -398,20 +403,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
               children: [
                 Text(
                   reminder['title'],
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(Icons.access_time, size: 14, color: Colors.grey[400]),
+                    Icon(Icons.access_time, size: 14, color: colorScheme.onSurfaceVariant),
                     const SizedBox(width: 6),
                     Text(
                       reminder['time'],
-                      style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+                      style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -427,7 +432,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ),
               child: Text(
                 badgeText,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colorScheme.onPrimary),
               ),
             ),
         ],

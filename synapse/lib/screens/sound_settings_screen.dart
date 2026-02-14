@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../theme/app_theme.dart';
 import '../services/settings_service.dart';
 import '../widgets/sound_picker_widget.dart';
 
@@ -93,44 +92,46 @@ class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: AppTheme.black,
+        backgroundColor: colorScheme.background,
         appBar: AppBar(
-          backgroundColor: AppTheme.black,
+          backgroundColor: colorScheme.background,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            icon: Icon(Icons.arrow_back, color: colorScheme.onBackground),
             onPressed: () => Navigator.of(context).pop(),
           ),
-          title: const Text(
+          title: Text(
             'Sound Settings',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24,
+            style: textTheme.titleLarge?.copyWith(
+              color: colorScheme.onBackground,
               fontWeight: FontWeight.bold,
             ),
           ),
         ),
-        body: const Center(
-          child: CircularProgressIndicator(),
+        body: Center(
+          child: CircularProgressIndicator(color: colorScheme.primary),
         ),
       );
     }
     return Scaffold(
-      backgroundColor: AppTheme.black,
+      backgroundColor: colorScheme.background,
       appBar: AppBar(
-        backgroundColor: AppTheme.black,
+        backgroundColor: colorScheme.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: colorScheme.onBackground),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'Sound Settings',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 24,
+          style: textTheme.titleLarge?.copyWith(
+            color: colorScheme.onBackground,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -164,15 +165,16 @@ class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
   }
 
   Widget _buildSectionTitle(String title, String subtitle) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: const TextStyle(
-            fontSize: 20,
+          style: textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
-            color: Colors.white,
+            color: colorScheme.onBackground,
           ),
         ),
         const SizedBox(height: 4),
@@ -180,7 +182,7 @@ class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
           subtitle,
           style: TextStyle(
             fontSize: 14,
-            color: Colors.grey[400],
+            color: colorScheme.onSurfaceVariant,
           ),
         ),
       ],

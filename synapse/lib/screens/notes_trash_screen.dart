@@ -1,20 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../services/notes_service.dart';
-import '../theme/app_theme.dart';
 
 class NotesTrashScreen extends StatelessWidget {
   const NotesTrashScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     final notesService = NotesService();
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.black : Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: isDark ? Colors.grey[900] : Colors.white,
+        backgroundColor: colorScheme.surface,
         title: const Text('Trash'),
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -24,12 +25,12 @@ class NotesTrashScreen extends StatelessWidget {
             return Center(
               child: Text(
                 'Error loading trash',
-                style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
+                style: textTheme.bodyMedium?.copyWith(color: colorScheme.error),
               ),
             );
           }
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: AppTheme.netflixRed));
+            return Center(child: CircularProgressIndicator(color: colorScheme.primary));
           }
 
           final notes = snapshot.data?.docs ?? [];
@@ -37,7 +38,7 @@ class NotesTrashScreen extends StatelessWidget {
             return Center(
               child: Text(
                 'Trash is empty',
-                style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
+                style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
               ),
             );
           }
@@ -55,14 +56,14 @@ class NotesTrashScreen extends StatelessWidget {
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.grey[900] : Colors.grey[100],
+                  color: colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: ListTile(
                   title: Text(
                     title,
                     style: TextStyle(
-                      color: isDark ? Colors.white : Colors.black,
+                      color: colorScheme.onSurface,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -75,7 +76,7 @@ class NotesTrashScreen extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: isDark ? Colors.grey[400] : Colors.grey[600],
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
                       if (deletedAt != null) ...[
@@ -84,7 +85,7 @@ class NotesTrashScreen extends StatelessWidget {
                           'Deleted: ${_formatDate(deletedAt)}',
                           style: TextStyle(
                             fontSize: 12,
-                            color: isDark ? Colors.grey[500] : Colors.grey[500],
+                            color: colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -94,11 +95,11 @@ class NotesTrashScreen extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.restore, color: Colors.green),
+                        icon: Icon(Icons.restore, color: colorScheme.primary),
                         onPressed: () => _restoreNote(context, notesService, doc.id),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.delete_forever, color: AppTheme.netflixRed),
+                        icon: Icon(Icons.delete_forever, color: colorScheme.error),
                         onPressed: () => _permanentlyDeleteNote(context, notesService, doc.id),
                       ),
                     ],
@@ -117,13 +118,14 @@ class NotesTrashScreen extends StatelessWidget {
   }
 
   Future<void> _restoreNote(BuildContext context, NotesService service, String noteId) async {
+    final colorScheme = Theme.of(context).colorScheme;
     try {
       await service.restoreNote(noteId);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Note restored'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('Note restored'),
+            backgroundColor: colorScheme.primary,
           ),
         );
       }
@@ -132,7 +134,7 @@ class NotesTrashScreen extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: colorScheme.error,
           ),
         );
       }
@@ -143,13 +145,11 @@ class NotesTrashScreen extends StatelessWidget {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? Colors.grey[900]
-            : Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         title: Text(
           'Permanently Delete',
           style: TextStyle(
-            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         content: const Text('This cannot be undone. Are you sure?'),
@@ -160,7 +160,10 @@ class NotesTrashScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: AppTheme.netflixRed)),
+            child: Text(
+              'Delete',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
           ),
         ],
       ),
@@ -171,9 +174,9 @@ class NotesTrashScreen extends StatelessWidget {
         await service.permanentlyDeleteNote(noteId);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Note permanently deleted'),
-              backgroundColor: Colors.green,
+            SnackBar(
+              content: const Text('Note permanently deleted'),
+              backgroundColor: Theme.of(context).colorScheme.primary,
             ),
           );
         }
@@ -182,7 +185,7 @@ class NotesTrashScreen extends StatelessWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error: $e'),
-              backgroundColor: Colors.red,
+              backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );
         }

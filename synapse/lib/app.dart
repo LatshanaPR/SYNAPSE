@@ -14,14 +14,14 @@ class SynapseApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => ThemeProvider(),
-        child: Consumer<ThemeProvider>(
+      child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {
           return MaterialApp(
             title: 'Synapse',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
-            themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            themeMode: themeProvider.themeMode,
             scaffoldMessengerKey: AppMessenger.scaffoldMessengerKey,
             home: const AuthGate(),
             routes: {

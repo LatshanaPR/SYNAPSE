@@ -126,15 +126,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? Colors.grey[900] : Colors.grey[100];
-    final cardColor = isDark ? Colors.grey[800] : Colors.white;
+    final bgColor = colorScheme.background;
+    final cardColor = colorScheme.surface;
 
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: isDark ? AppTheme.black : Colors.white,
+        backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: isDark ? Colors.grey[900] : Colors.white,
+          backgroundColor: colorScheme.surface,
           title: const Text('Edit Profile'),
         ),
         body: const Center(child: CircularProgressIndicator()),
@@ -142,9 +144,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.black : Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: isDark ? Colors.grey[900] : Colors.white,
+        backgroundColor: colorScheme.surface,
         title: const Text('Edit Profile'),
         actions: [
           if (_isSaving)
@@ -191,10 +193,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           : null,
                     ),
                     child: (_selectedImage == null && _photoUrl == null)
-                        ? const Icon(
+                        ? Icon(
                             Icons.person,
                             size: 60,
-                            color: Colors.white,
+                            color: colorScheme.onSurface,
                           )
                         : null,
                   ),
@@ -207,12 +209,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       decoration: BoxDecoration(
                         color: AppTheme.netflixRed,
                         shape: BoxShape.circle,
-                        border: Border.all(color: isDark ? AppTheme.black : Colors.white, width: 3),
+                        border: Border.all(color: colorScheme.background, width: 3),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.camera_alt,
                         size: 18,
-                        color: Colors.white,
+                        color: colorScheme.onPrimary,
                       ),
                     ),
                   ),
@@ -228,10 +230,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               child: TextField(
                 controller: _nameController,
-                style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                style: TextStyle(color: colorScheme.onSurface),
                 decoration: InputDecoration(
                   labelText: 'Display Name',
-                  labelStyle: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
+                  labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,

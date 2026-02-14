@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../services/notification_service.dart';
 import '../services/task_service.dart';
-import '../theme/app_theme.dart';
 import '../widgets/sound_picker_widget.dart';
 
 class EditTaskScreen extends StatefulWidget {
@@ -63,17 +62,6 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       initialDate: _selectedDateTime ?? DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
-      builder: (context, child) {
-        return Theme(
-          data: ThemeData.dark().copyWith(
-            primaryColor: AppTheme.netflixRed,
-            colorScheme: const ColorScheme.dark(
-              primary: AppTheme.netflixRed,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
 
     if (pickedDate != null) {
@@ -82,17 +70,6 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
         initialTime: _selectedDateTime != null
             ? TimeOfDay.fromDateTime(_selectedDateTime!)
             : TimeOfDay.now(),
-        builder: (context, child) {
-          return Theme(
-            data: ThemeData.dark().copyWith(
-              primaryColor: AppTheme.netflixRed,
-              colorScheme: const ColorScheme.dark(
-                primary: AppTheme.netflixRed,
-              ),
-            ),
-            child: child!,
-          );
-        },
       );
 
       if (pickedTime != null) {
@@ -110,15 +87,16 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   }
 
   Future<void> _updateTask() async {
+    final colorScheme = Theme.of(context).colorScheme;
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
     if (_selectedDateTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a date and time'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Please select a date and time'),
+          backgroundColor: colorScheme.error,
         ),
       );
       return;
@@ -158,9 +136,9 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Task updated successfully'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('Task updated successfully'),
+            backgroundColor: colorScheme.primary,
           ),
         );
       }
@@ -172,7 +150,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: colorScheme.error,
           ),
         );
       }
@@ -181,20 +159,22 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     return Scaffold(
-      backgroundColor: AppTheme.black,
+      backgroundColor: colorScheme.background,
       appBar: AppBar(
-        backgroundColor: AppTheme.black,
+        backgroundColor: colorScheme.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: colorScheme.onBackground),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'Edit Task',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 24,
+          style: textTheme.titleLarge?.copyWith(
+            color: colorScheme.onBackground,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -210,27 +190,29 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                 // Title Field
                 TextFormField(
                   controller: _titleController,
-                  style: const TextStyle(color: Colors.white),
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: colorScheme.onSurface,
+                  ),
                   decoration: InputDecoration(
                     labelText: 'Title',
-                    labelStyle: TextStyle(color: Colors.grey[400]),
+                    labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.grey[700]!),
+                      borderSide: BorderSide(color: colorScheme.outline),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: AppTheme.netflixRed),
+                      borderSide: BorderSide(color: colorScheme.primary),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     errorBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.red),
+                      borderSide: BorderSide(color: colorScheme.error),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     focusedErrorBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.red),
+                      borderSide: BorderSide(color: colorScheme.error),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    fillColor: Colors.grey[900],
+                    fillColor: colorScheme.surface,
                     filled: true,
                   ),
                   validator: (value) {
@@ -244,20 +226,22 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                 // Description Field
                 TextFormField(
                   controller: _descriptionController,
-                  style: const TextStyle(color: Colors.white),
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: colorScheme.onSurface,
+                  ),
                   maxLines: 4,
                   decoration: InputDecoration(
                     labelText: 'Description (Optional)',
-                    labelStyle: TextStyle(color: Colors.grey[400]),
+                    labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.grey[700]!),
+                      borderSide: BorderSide(color: colorScheme.outline),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: AppTheme.netflixRed),
+                      borderSide: BorderSide(color: colorScheme.primary),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    fillColor: Colors.grey[900],
+                    fillColor: colorScheme.surface,
                     filled: true,
                   ),
                 ),
@@ -266,7 +250,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                 Text(
                   'Priority',
                   style: TextStyle(
-                    color: Colors.grey[400],
+                    color: colorScheme.onSurfaceVariant,
                     fontSize: 14,
                   ),
                 ),
@@ -283,13 +267,13 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? AppTheme.netflixRed.withOpacity(0.3)
-                                  : Colors.grey[900],
+                                  ? colorScheme.primary.withOpacity(0.2)
+                                  : colorScheme.surface,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
                                 color: isSelected
-                                    ? AppTheme.netflixRed
-                                    : Colors.grey[700]!,
+                                    ? colorScheme.primary
+                                    : colorScheme.outline,
                                 width: 1,
                               ),
                             ),
@@ -297,7 +281,9 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                               priority,
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: isSelected ? Colors.white : Colors.grey[400],
+                                color: isSelected
+                                    ? colorScheme.onSurface
+                                    : colorScheme.onSurfaceVariant,
                                 fontSize: 16,
                                 fontWeight: isSelected
                                     ? FontWeight.w600
@@ -327,15 +313,15 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.grey[900],
+                      color: colorScheme.surface,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey[700]!),
+                      border: Border.all(color: colorScheme.outline),
                     ),
                     child: Row(
                       children: [
                         Icon(
                           Icons.calendar_today,
-                          color: Colors.grey[400],
+                          color: colorScheme.onSurfaceVariant,
                           size: 20,
                         ),
                         const SizedBox(width: 12),
@@ -345,8 +331,8 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                               : '${_selectedDateTime!.day}/${_selectedDateTime!.month}/${_selectedDateTime!.year} ${_selectedDateTime!.hour.toString().padLeft(2, '0')}:${_selectedDateTime!.minute.toString().padLeft(2, '0')}',
                           style: TextStyle(
                             color: _selectedDateTime == null
-                                ? Colors.grey[400]
-                                : Colors.white,
+                                ? colorScheme.onSurfaceVariant
+                                : colorScheme.onSurface,
                             fontSize: 16,
                           ),
                         ),
@@ -359,25 +345,28 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                 ElevatedButton(
                   onPressed: _isSaving ? null : _updateTask,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.netflixRed,
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: colorScheme.onPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                   child: _isSaving
-                      ? const SizedBox(
+                      ? SizedBox(
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              colorScheme.onPrimary,
+                            ),
                           ),
                         )
-                      : const Text(
+                      : Text(
                           'Update Task',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: colorScheme.onPrimary,
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),

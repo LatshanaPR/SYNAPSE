@@ -107,16 +107,19 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? Colors.grey[900]
-            : Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         title: Text(
           'Delete Note',
           style: TextStyle(
-            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
-        content: const Text('Move this note to trash?'),
+        content: Text(
+          'Move this note to trash?',
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -178,12 +181,14 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.black : Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: isDark ? Colors.grey[900] : Colors.white,
+        backgroundColor: colorScheme.surface,
         title: Text(widget.noteId != null ? 'Edit Note' : 'New Note'),
         actions: [
           if (widget.noteId != null)
@@ -216,11 +221,11 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : Colors.black,
+                color: colorScheme.onSurface,
               ),
               decoration: InputDecoration(
                 hintText: 'Title',
-                hintStyle: TextStyle(color: isDark ? Colors.grey[500] : Colors.grey[400]),
+                hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
                 border: InputBorder.none,
               ),
             ),
@@ -229,14 +234,14 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: isDark ? Colors.grey[900] : Colors.grey[100],
+                color: colorScheme.surfaceVariant.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 children: [
                   Icon(
                     _isLocked ? Icons.lock : Icons.lock_open,
-                    color: _isLocked ? AppTheme.netflixRed : Colors.grey,
+                    color: _isLocked ? AppTheme.netflixRed : colorScheme.onSurfaceVariant,
                     size: 20,
                   ),
                   const SizedBox(width: 12),
@@ -244,7 +249,7 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
                     child: Text(
                       _isLocked ? 'Note is locked' : 'Lock this note',
                       style: TextStyle(
-                        color: isDark ? Colors.white : Colors.black,
+                        color: colorScheme.onSurface,
                         fontSize: 14,
                       ),
                     ),
@@ -263,11 +268,11 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
                 controller: _contentController,
                 style: TextStyle(
                   fontSize: 16,
-                  color: isDark ? Colors.white : Colors.black,
+                  color: colorScheme.onSurface,
                 ),
                 decoration: InputDecoration(
                   hintText: 'Start writing...',
-                  hintStyle: TextStyle(color: isDark ? Colors.grey[500] : Colors.grey[400]),
+                  hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
                   border: InputBorder.none,
                 ),
                 maxLines: null,

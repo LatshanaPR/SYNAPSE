@@ -22,8 +22,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Scaffold(
-      backgroundColor: AppTheme.black,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: StreamBuilder<QuerySnapshot>(
           stream: _taskService.getTasks(),
@@ -32,7 +36,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               return Center(
                 child: Text(
                   'Error: ${snapshot.error}',
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(color: colorScheme.error),
                 ),
               );
             }
@@ -93,18 +97,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Dashboard',
-                    style: TextStyle(
-                      fontSize: 28,
+                    style: textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Project Summary',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+                    style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
                   ),
                   const SizedBox(height: 24),
                   // Summary Cards 2x2
@@ -156,11 +159,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.grey[900],
+                      color: colorScheme.surface,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
+                          color: colorScheme.shadow.withOpacity(0.2),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -169,12 +172,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Project Statistics',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                            color: colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -210,12 +213,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 24),
                   // Upcoming Tasks Section
-                  const Text(
+                  Text(
                     'Upcoming Tasks',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -228,7 +231,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: Colors.grey[900],
+                        color: colorScheme.surface,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
@@ -236,7 +239,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           'No upcoming tasks',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey[400],
+                            color: colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -375,6 +378,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   /// Build upcoming task card
   Widget _buildUpcomingTaskCard(String taskId, Map<String, dynamic> task) {
+    final colorScheme = Theme.of(context).colorScheme;
     final title = task['title'] as String? ?? 'Untitled';
     final dateTime = TaskService.getEffectiveDueTime(task);
     final priority = task['priority'] as String? ?? 'Medium';
@@ -415,7 +419,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.grey[900],
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: priorityColor.withOpacity(0.3), width: 1),
         ),
@@ -436,10 +440,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: colorScheme.onSurface,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -447,12 +451,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: 4),
                   Text(
                     dateStr,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[400]),
+                    style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: Colors.grey[400]),
+            Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
           ],
         ),
       ),
@@ -460,15 +464,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildSummaryCard(IconData icon, String number, String label, Color color) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color.withOpacity(0.3), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: colorScheme.shadow.withOpacity(0.2),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -481,16 +486,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 12),
           Text(
             number,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+            style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
           ),
         ],
       ),
@@ -498,6 +503,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildBarGroup(String label, List<double> heights) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       children: [
         SizedBox(
@@ -537,13 +543,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const SizedBox(height: 8),
         Text(
           label,
-          style: TextStyle(fontSize: 12, color: Colors.grey[400]),
+          style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
         ),
       ],
     );
   }
 
   Widget _buildLegendItem(Color color, String label) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Row(
       children: [
         Container(
@@ -552,21 +559,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
-        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[400])),
+        Text(label, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
       ],
     );
   }
 
   Widget _buildMetricCard(String title, String value, String change, bool isPositive) {
+    final colorScheme = Theme.of(context).colorScheme;
     final showChange = change.isNotEmpty;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: colorScheme.shadow.withOpacity(0.2),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -577,7 +585,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           Text(
             title,
-            style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+            style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 8),
           Row(
@@ -587,10 +595,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Flexible(
                 child: Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: colorScheme.onSurface,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),

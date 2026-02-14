@@ -33,15 +33,16 @@ class _TaskListScreenState extends State<TaskListScreen>
   }
 
   Color _getPriorityColor(String priority) {
+    final colorScheme = Theme.of(context).colorScheme;
     switch (priority) {
       case 'High':
-        return AppTheme.netflixRed;
+        return colorScheme.primary;
       case 'Medium':
-        return Colors.orange;
+        return colorScheme.secondary;
       case 'Low':
-        return Colors.green;
+        return colorScheme.tertiary;
       default:
-        return Colors.grey;
+        return colorScheme.outline;
     }
   }
 
@@ -59,8 +60,9 @@ class _TaskListScreenState extends State<TaskListScreen>
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: AppTheme.black,
+      backgroundColor: colorScheme.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -70,7 +72,7 @@ class _TaskListScreenState extends State<TaskListScreen>
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.menu, color: Colors.white),
+                    icon: Icon(Icons.menu, color: colorScheme.onBackground),
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -80,14 +82,14 @@ class _TaskListScreenState extends State<TaskListScreen>
                       );
                     },
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Task List',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: colorScheme.onBackground,
                       ),
                     ),
                   ),
@@ -99,19 +101,19 @@ class _TaskListScreenState extends State<TaskListScreen>
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 20),
               decoration: BoxDecoration(
-                color: Colors.grey[900],
+                color: colorScheme.surface,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: TabBar(
                 controller: _tabController,
                 indicator: BoxDecoration(
-                  color: AppTheme.netflixRed,
+                  color: colorScheme.primary,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 indicatorSize: TabBarIndicatorSize.tab,
                 dividerColor: Colors.transparent,
-                labelColor: Colors.white,
-                unselectedLabelColor: Colors.grey[400],
+                labelColor: colorScheme.onPrimary,
+                unselectedLabelColor: colorScheme.onSurface.withOpacity(0.5),
                 labelStyle: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -137,15 +139,15 @@ class _TaskListScreenState extends State<TaskListScreen>
                     return Center(
                       child: Text(
                         'Error: ${snapshot.error}',
-                        style: const TextStyle(color: Colors.white),
+                        style: TextStyle(color: colorScheme.error),
                       ),
                     );
                   }
 
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
+                    return Center(
                       child: CircularProgressIndicator(
-                        color: AppTheme.netflixRed,
+                        color: colorScheme.primary,
                       ),
                     );
                   }
@@ -157,19 +159,19 @@ class _TaskListScreenState extends State<TaskListScreen>
                         Center(
                           child: Text(
                             'No tasks yet',
-                            style: TextStyle(color: Colors.grey[400]),
+                            style: TextStyle(color: colorScheme.onSurface.withOpacity(0.5)),
                           ),
                         ),
                         Center(
                           child: Text(
                             'No tasks yet',
-                            style: TextStyle(color: Colors.grey[400]),
+                            style: TextStyle(color: colorScheme.onSurface.withOpacity(0.5)),
                           ),
                         ),
                         Center(
                           child: Text(
                             'No tasks yet',
-                            style: TextStyle(color: Colors.grey[400]),
+                            style: TextStyle(color: colorScheme.onSurface.withOpacity(0.5)),
                           ),
                         ),
                       ],
@@ -227,11 +229,12 @@ class _TaskListScreenState extends State<TaskListScreen>
   }
 
   Widget _buildTaskList(List<QueryDocumentSnapshot> docs) {
+    final colorScheme = Theme.of(context).colorScheme;
     if (docs.isEmpty) {
       return Center(
         child: Text(
           'No tasks yet',
-          style: TextStyle(color: Colors.grey[400]),
+          style: TextStyle(color: colorScheme.onSurface.withOpacity(0.5)),
         ),
       );
     }
@@ -248,6 +251,8 @@ class _TaskListScreenState extends State<TaskListScreen>
   }
 
   Widget _buildTaskCard(Map<String, dynamic> task, String taskId) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final priorityColor = _getPriorityColor(task['priority'] ?? 'Medium');
     
     // Format dateTime from Firestore Timestamp
@@ -298,13 +303,13 @@ class _TaskListScreenState extends State<TaskListScreen>
 
     // Get status display name
     String statusDisplay = task['status'] ?? 'ToDo';
-    Color statusColor = Colors.grey[700]!;
+    Color statusColor = colorScheme.outline;
     if (statusDisplay == 'Complete') {
-      statusColor = Colors.green;
+      statusColor = colorScheme.secondary;
     } else if (statusDisplay == 'notDone' || statusDisplay == 'Review') {
       statusColor = AppTheme.netflixRed;
     } else if (statusDisplay == 'ToDo') {
-      statusColor = Colors.blue;
+      statusColor = colorScheme.tertiary;
     }
 
     return GestureDetector(
@@ -316,13 +321,13 @@ class _TaskListScreenState extends State<TaskListScreen>
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.red.withOpacity(0.7),
+            color: colorScheme.error.withOpacity(0.85),
             borderRadius: BorderRadius.circular(12),
           ),
           alignment: Alignment.centerRight,
-          child: const Icon(
+          child: Icon(
             Icons.delete,
-            color: Colors.white,
+            color: colorScheme.onError,
             size: 30,
           ),
         ),
@@ -336,11 +341,11 @@ class _TaskListScreenState extends State<TaskListScreen>
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.grey[900],
+            color: colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.3),
+                color: colorScheme.shadow.withOpacity(0.2),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -354,16 +359,15 @@ class _TaskListScreenState extends State<TaskListScreen>
                   Expanded(
                     child: Text(
                       task['title'] ?? 'Untitled Task',
-                      style: const TextStyle(
-                        fontSize: 16,
+                      style: textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                   ),
                   // Edit Button
                   IconButton(
-                    icon: const Icon(Icons.edit, color: AppTheme.netflixRed, size: 20),
+                    icon: Icon(Icons.edit, color: colorScheme.primary, size: 20),
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -381,7 +385,7 @@ class _TaskListScreenState extends State<TaskListScreen>
                   ),
                   // Delete Button
                   IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                    icon: Icon(Icons.delete, color: colorScheme.error, size: 20),
                     onPressed: () async {
                       final confirmed = await _confirmDelete(context, taskId);
                       if (confirmed == true) {
@@ -400,7 +404,7 @@ class _TaskListScreenState extends State<TaskListScreen>
                   task['description'],
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey[400],
+                    color: colorScheme.onSurfaceVariant,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -425,20 +429,20 @@ class _TaskListScreenState extends State<TaskListScreen>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.2),
+                    color: colorScheme.secondary.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: Colors.orange.withOpacity(0.5)),
+                    border: Border.all(color: colorScheme.secondary.withOpacity(0.5)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.notifications, size: 14, color: Colors.orange),
+                      Icon(Icons.notifications, size: 14, color: colorScheme.secondary),
                       const SizedBox(width: 6),
                       Text(
                         snoozedUntilText,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.orange,
+                          color: colorScheme.secondary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -452,21 +456,21 @@ class _TaskListScreenState extends State<TaskListScreen>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.2),
+                    color: colorScheme.error.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: Colors.red.withOpacity(0.5)),
+                    border: Border.all(color: colorScheme.error.withOpacity(0.5)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.warning, size: 14, color: Colors.red[300]),
+                      Icon(Icons.warning, size: 14, color: colorScheme.error),
                       const SizedBox(width: 6),
                       Flexible(
                         child: Text(
                           'Snoozed ${task['snoozeCount']} times. Consider rescheduling this task.',
                           style: TextStyle(
                             fontSize: 11,
-                            color: Colors.red[300],
+                            color: colorScheme.error,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -478,11 +482,11 @@ class _TaskListScreenState extends State<TaskListScreen>
               ],
               Row(
                 children: [
-                  Icon(Icons.calendar_today, size: 14, color: Colors.grey[400]),
+                  Icon(Icons.calendar_today, size: 14, color: colorScheme.onSurfaceVariant),
                   const SizedBox(width: 6),
                   Text(
                     formattedDate,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[400]),
+                    style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                   ),
                   const Spacer(),
                   // Status Update Actions
@@ -494,11 +498,11 @@ class _TaskListScreenState extends State<TaskListScreen>
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      icon: const Icon(Icons.check_circle, size: 16, color: Colors.green),
+                      icon: Icon(Icons.check_circle, size: 16, color: colorScheme.secondary),
                       label: Text(
                         'Complete',
                         style: TextStyle(
-                          color: Colors.green,
+                          color: colorScheme.secondary,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -559,9 +563,10 @@ class _TaskListScreenState extends State<TaskListScreen>
   }
 
   void _showTaskOptions(BuildContext context, Map<String, dynamic> task, String taskId) {
+    final colorScheme = Theme.of(context).colorScheme;
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.grey[900],
+      backgroundColor: colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -572,7 +577,7 @@ class _TaskListScreenState extends State<TaskListScreen>
           children: [
             ListTile(
               leading: const Icon(Icons.edit, color: AppTheme.netflixRed),
-              title: const Text('Edit Task', style: TextStyle(color: Colors.white)),
+              title: Text('Edit Task', style: TextStyle(color: colorScheme.onSurface)),
               onTap: () {
                 Navigator.pop(context);
                 _navigateToEditTask(context, taskId, task);
@@ -580,7 +585,7 @@ class _TaskListScreenState extends State<TaskListScreen>
             ),
             ListTile(
               leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Delete Task', style: TextStyle(color: Colors.white)),
+              title: Text('Delete Task', style: TextStyle(color: colorScheme.onSurface)),
               onTap: () {
                 Navigator.pop(context);
                 _confirmDelete(context, taskId).then((confirmed) {
@@ -597,25 +602,26 @@ class _TaskListScreenState extends State<TaskListScreen>
   }
 
   Future<bool?> _confirmDelete(BuildContext context, String taskId) async {
+    final colorScheme = Theme.of(context).colorScheme;
     return showDialog<bool>(
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          backgroundColor: Colors.grey[900],
-          title: const Text(
+          backgroundColor: colorScheme.surface,
+          title: Text(
             'Delete Task',
-            style: TextStyle(color: Colors.white),
+            style: TextStyle(color: colorScheme.onSurface),
           ),
-          content: const Text(
+          content: Text(
             'Are you sure you want to delete this task?',
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(color: colorScheme.onSurfaceVariant),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
               child: Text(
                 'Cancel',
-                style: TextStyle(color: Colors.grey[400]),
+                style: TextStyle(color: colorScheme.onSurfaceVariant),
               ),
             ),
             TextButton(

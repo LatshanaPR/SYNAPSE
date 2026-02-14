@@ -37,22 +37,23 @@ class _TaskPasswordDialogState extends State<TaskPasswordDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return AlertDialog(
-      backgroundColor: isDark ? Colors.grey[900] : Colors.white,
+      backgroundColor: colorScheme.surface,
       title: Text(
         widget.isForgotPassword
             ? 'Forgot Password'
             : widget.isSettingPassword
                 ? 'Set Password'
                 : 'Enter Password',
-        style: TextStyle(color: isDark ? Colors.white : Colors.black),
+        style: TextStyle(color: colorScheme.onSurface),
       ),
       content: widget.isForgotPassword
-          ? const Text(
+          ? Text(
               'Password cannot be reset. Access to this task is cancelled.',
-              style: TextStyle(color: Colors.grey),
+              style: TextStyle(color: colorScheme.onSurfaceVariant),
             )
           : Column(
               mainAxisSize: MainAxisSize.min,
@@ -62,7 +63,7 @@ class _TaskPasswordDialogState extends State<TaskPasswordDialog> {
                     widget.taskTitle!,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : Colors.black,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -70,20 +71,20 @@ class _TaskPasswordDialogState extends State<TaskPasswordDialog> {
                 if (widget.isSettingPassword)
                   Text(
                     'Set a password (min 4 characters)',
-                    style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
+                    style: TextStyle(color: colorScheme.onSurfaceVariant),
                   ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
-                  style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                  style: TextStyle(color: colorScheme.onSurface),
                   decoration: InputDecoration(
                     labelText: widget.isSettingPassword ? 'New Password' : 'Password',
-                    labelStyle: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
+                    labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                        color: Colors.grey,
+                        color: colorScheme.onSurfaceVariant,
                       ),
                       onPressed: () {
                         setState(() {
@@ -114,18 +115,18 @@ class _TaskPasswordDialogState extends State<TaskPasswordDialog> {
               final password = _passwordController.text.trim();
               if (password.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Please enter a password'),
-                    backgroundColor: Colors.red,
+                  SnackBar(
+                    content: const Text('Please enter a password'),
+                    backgroundColor: colorScheme.error,
                   ),
                 );
                 return;
               }
               if (widget.isSettingPassword && password.length < 4) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Password must be at least 4 characters'),
-                    backgroundColor: Colors.red,
+                  SnackBar(
+                    content: const Text('Password must be at least 4 characters'),
+                    backgroundColor: colorScheme.error,
                   ),
                 );
                 return;

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../theme/app_theme.dart';
 import '../widgets/app_logo.dart';
 import 'login_screen.dart';
 import 'home_screen.dart';
@@ -53,6 +52,7 @@ class _AuthGateState extends State<AuthGate> {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
+        final colorScheme = Theme.of(context).colorScheme;
         // Mark auth as ready when resolved
         if (snapshot.connectionState != ConnectionState.waiting && !_authReady) {
           Future.microtask(() {
@@ -69,7 +69,7 @@ class _AuthGateState extends State<AuthGate> {
         if (_showLogo && (!_minTimePassed || !_authReady || 
             snapshot.connectionState == ConnectionState.waiting)) {
           return Scaffold(
-            backgroundColor: AppTheme.black,
+            backgroundColor: colorScheme.background,
             body: Center(
               child: AppLogo(size: 200),
             ),

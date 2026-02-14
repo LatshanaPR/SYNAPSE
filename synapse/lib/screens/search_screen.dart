@@ -51,31 +51,33 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     return Scaffold(
-      backgroundColor: AppTheme.black,
+      backgroundColor: colorScheme.background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Search',
-                style: TextStyle(
-                  fontSize: 28,
+                style: textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: colorScheme.onBackground,
                 ),
               ),
               const SizedBox(height: 20),
               // Search Bar
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.grey[900],
+                  color: colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
+                      color: colorScheme.shadow.withOpacity(0.2),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -83,17 +85,17 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
                 child: TextField(
                   controller: _searchController,
-                  style: const TextStyle(color: Colors.white),
+                  style: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface),
                   decoration: InputDecoration(
                     hintText: 'Search tasks...',
-                    hintStyle: TextStyle(color: Colors.grey[500]),
-                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                    hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+                    prefixIcon: Icon(Icons.search, color: colorScheme.onSurfaceVariant),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
                     filled: true,
-                    fillColor: Colors.grey[900],
+                    fillColor: colorScheme.surface,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                   ),
                   onChanged: (value) {
@@ -113,7 +115,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       return Center(
                         child: Text(
                           'Couldn\'t load tasks.',
-                          style: TextStyle(color: Colors.grey[400], fontSize: 14),
+                          style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
                         ),
                       );
                     }
@@ -137,14 +139,14 @@ class _SearchScreenState extends State<SearchScreen> {
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.lightbulb_outline, size: 18, color: Colors.grey[400]),
+                              Icon(Icons.lightbulb_outline, size: 18, color: colorScheme.onSurfaceVariant),
                               const SizedBox(width: 8),
                               Text(
                                 'Suggestions',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.grey[400],
+                                  color: colorScheme.onSurfaceVariant,
                                 ),
                               ),
                             ],
@@ -153,7 +155,7 @@ class _SearchScreenState extends State<SearchScreen> {
                           if (keywords.isEmpty)
                             Text(
                               'No suggestions yet',
-                              style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                              style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
                             )
                           else
                             Wrap(
@@ -170,13 +172,13 @@ class _SearchScreenState extends State<SearchScreen> {
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                     decoration: BoxDecoration(
-                                      color: Colors.grey[900],
+                                      color: colorScheme.surface,
                                       borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(color: Colors.grey[800]!, width: 1),
+                                      border: Border.all(color: colorScheme.outline, width: 1),
                                     ),
                                     child: Text(
                                       keyword,
-                                      style: const TextStyle(fontSize: 14, color: Colors.white),
+                                      style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
                                     ),
                                   ),
                                 );
@@ -197,7 +199,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       return Center(
                         child: Text(
                           'No tasks match "$_query"',
-                          style: TextStyle(color: Colors.grey[400], fontSize: 14),
+                          style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
                         ),
                       );
                     }
@@ -230,11 +232,11 @@ class _SearchScreenState extends State<SearchScreen> {
                             margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.grey[900],
+                              color: colorScheme.surface,
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.3),
+                                  color: colorScheme.shadow.withOpacity(0.15),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
                                 ),
@@ -248,10 +250,10 @@ class _SearchScreenState extends State<SearchScreen> {
                                     children: [
                                       Text(
                                         title,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w600,
-                                          color: Colors.white,
+                                          color: colorScheme.onSurface,
                                         ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
@@ -259,7 +261,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                       const SizedBox(height: 4),
                                       Text(
                                         dateStr,
-                                        style: TextStyle(fontSize: 12, color: Colors.grey[400]),
+                                        style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
@@ -268,13 +270,13 @@ class _SearchScreenState extends State<SearchScreen> {
                                           fontSize: 12,
                                           color: status == 'notDone'
                                               ? AppTheme.netflixRed
-                                              : Colors.grey[500],
+                                              : colorScheme.onSurfaceVariant,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                Icon(Icons.chevron_right, color: Colors.grey[400]),
+                                Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
                               ],
                             ),
                           ),

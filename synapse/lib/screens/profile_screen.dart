@@ -25,12 +25,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDark = themeProvider.isDarkMode;
     final user = FirebaseAuth.instance.currentUser;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.black : Colors.white,
+      backgroundColor: colorScheme.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20.0),
@@ -65,7 +64,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               width: 80,
                               height: 80,
                               decoration: BoxDecoration(
-                                color: AppTheme.netflixRed,
+                                color: colorScheme.primary,
                                 borderRadius: BorderRadius.circular(12),
                                 image: photoUrl != null
                                     ? DecorationImage(
@@ -75,10 +74,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     : null,
                               ),
                               child: photoUrl == null
-                                  ? const Icon(
+                                  ? Icon(
                                       Icons.person,
                                       size: 50,
-                                      color: Colors.white,
+                                      color: colorScheme.onPrimary,
                                     )
                                   : null,
                             ),
@@ -89,17 +88,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 width: 28,
                                 height: 28,
                                 decoration: BoxDecoration(
-                                  color: Colors.grey[700],
+                                  color: colorScheme.secondaryContainer,
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: isDark ? AppTheme.black : Colors.white,
+                                    color: colorScheme.background,
                                     width: 2,
                                   ),
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.edit,
                                   size: 14,
-                                  color: Colors.white,
+                                  color: colorScheme.onSecondaryContainer,
                                 ),
                               ),
                             ),
@@ -117,7 +116,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : Colors.black,
+                                color: colorScheme.onBackground,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -125,7 +124,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               email,
                               style: TextStyle(
                                 fontSize: 14,
-                                color: isDark ? Colors.grey[400] : Colors.grey[600],
+                                color: colorScheme.onBackground.withOpacity(0.7),
                               ),
                             ),
                           ],
@@ -149,8 +148,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   icon: const Icon(Icons.edit, size: 18),
                   label: const Text('Edit Profile'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.netflixRed,
-                    foregroundColor: Colors.white,
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: colorScheme.onPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -233,8 +232,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: _buildStatCard(
                           tasksDone.toString(),
                           'Tasks Done',
-                          isDark ? Colors.white : Colors.black,
-                          isDark,
+                          Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -242,8 +240,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: _buildStatCard(
                           inProgress.toString(),
                           'In Progress',
-                          AppTheme.netflixRed,
-                          isDark,
+                          Theme.of(context).colorScheme.primary,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -251,8 +248,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: _buildStatCard(
                           dayStreak.toString(),
                           'Day Streak',
-                          isDark ? Colors.white : Colors.black,
-                          isDark,
+                          Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ],
@@ -266,17 +262,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : Colors.black,
+                  color: colorScheme.onBackground,
                 ),
               ),
               const SizedBox(height: 16),
               Container(
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.grey[900] : Colors.grey[100],
+                  color: colorScheme.surface,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: colorScheme.shadow.withOpacity(0.1),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -286,54 +282,57 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     _buildSettingItem(
                       icon: Icons.dark_mode_outlined,
-                      title: 'Dark Mode',
-                      trailing: Switch(
-                        value: themeProvider.isDarkMode,
-                        onChanged: (value) {
-                          themeProvider.toggleTheme();
+                      title: 'Theme Mode',
+                      trailing: IconButton(
+                        icon: Icon(
+                          Theme.of(context).brightness == Brightness.dark
+                              ? Icons.dark_mode
+                              : Theme.of(context).brightness == Brightness.light
+                                  ? Icons.light_mode
+                                  : Icons.brightness_auto,
+                          color: colorScheme.primary,
+                        ),
+                        onPressed: () {
+                          Provider.of<ThemeProvider>(context, listen: false).toggleThemeMode();
                         },
-                        activeColor: AppTheme.netflixRed,
+                        tooltip: 'Switch Theme Mode',
                       ),
-                      isDark: isDark,
                     ),
-                    _buildDivider(isDark),
+                    _buildDivider(colorScheme),
                     _buildSettingItem(
                       icon: Icons.settings_outlined,
                       title: 'Sound Settings',
-                      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                      trailing: Icon(Icons.chevron_right, color: colorScheme.onSurface.withOpacity(0.5)),
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (_) => const SoundSettingsScreen()),
                         );
                       },
-                      isDark: isDark,
                     ),
-                    _buildDivider(isDark),
+                    _buildDivider(colorScheme),
                     _buildSettingItem(
                       icon: Icons.lock_outline,
                       title: 'Privacy & Security',
-                      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                      trailing: Icon(Icons.chevron_right, color: colorScheme.onSurface.withOpacity(0.5)),
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (_) => const PrivacySecurityScreen()),
                         );
                       },
-                      isDark: isDark,
                     ),
-                    _buildDivider(isDark),
+                    _buildDivider(colorScheme),
                     _buildSettingItem(
                       icon: Icons.note_outlined,
                       title: 'My Notes',
-                      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                      trailing: Icon(Icons.chevron_right, color: colorScheme.onSurface.withOpacity(0.5)),
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (_) => const NotesScreen()),
                         );
                       },
-                      isDark: isDark,
                     ),
                   ],
                 ),
@@ -347,13 +346,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   icon: const Icon(Icons.logout, size: 18),
                   label: const Text('Log Out'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: isDark ? Colors.white : Colors.black,
+                    foregroundColor: colorScheme.error,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     side: BorderSide(
-                      color: AppTheme.netflixRed.withOpacity(0.5),
+                      color: colorScheme.error.withOpacity(0.5),
                       width: 1.5,
                     ),
-                    backgroundColor: AppTheme.netflixRed.withOpacity(0.1),
+                    backgroundColor: colorScheme.errorContainer.withOpacity(0.1),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -368,15 +367,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildStatCard(String number, String label, Color numberColor, bool isDark) {
+  Widget _buildStatCard(String number, String label, Color numberColor) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? Colors.grey[900] : Colors.grey[100],
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: colorScheme.shadow.withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -398,7 +398,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             label,
             style: TextStyle(
               fontSize: 12,
-              color: isDark ? Colors.grey[400] : Colors.grey[600],
+              color: colorScheme.onSurface.withOpacity(0.7),
             ),
           ),
         ],
@@ -411,22 +411,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required String title,
     required Widget trailing,
     VoidCallback? onTap,
-    required bool isDark,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Row(
           children: [
-            Icon(icon, color: isDark ? Colors.white : Colors.black, size: 24),
+            Icon(icon, color: colorScheme.onSurface, size: 24),
             const SizedBox(width: 16),
             Expanded(
               child: Text(
                 title,
                 style: TextStyle(
                   fontSize: 16,
-                  color: isDark ? Colors.white : Colors.black,
+                  color: colorScheme.onSurface,
                 ),
               ),
             ),
@@ -437,43 +437,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildDivider(bool isDark) {
+  Widget _buildDivider(ColorScheme colorScheme) {
     return Divider(
       height: 1,
       thickness: 1,
-      color: isDark ? Colors.grey[800] : Colors.grey[300],
+      color: colorScheme.outline.withOpacity(0.3),
       indent: 60,
     );
   }
 
   Future<void> _handleLogout() async {
+    final colorScheme = Theme.of(context).colorScheme;
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? Colors.grey[900]
-            : Colors.white,
+        backgroundColor: colorScheme.surface,
         title: Text(
           'Log Out',
-          style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
+          style: TextStyle(color: colorScheme.onSurface),
         ),
         content: Text(
           'Are you sure you want to log out?',
-          style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey : Colors.grey[700]),
+          style: TextStyle(color: colorScheme.onSurface.withOpacity(0.7)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
             child: Text(
               'Cancel',
-              style: TextStyle(color: Colors.grey[400]),
+              style: TextStyle(color: colorScheme.onSurface.withOpacity(0.5)),
             ),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text(
+            child: Text(
               'Log Out',
-              style: TextStyle(color: AppTheme.netflixRed),
+              style: TextStyle(color: colorScheme.error),
             ),
           ),
         ],

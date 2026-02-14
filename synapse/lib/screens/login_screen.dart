@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
 import '../services/auth_service.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
@@ -27,8 +26,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Scaffold(
-      backgroundColor: AppTheme.black,
+      backgroundColor: colorScheme.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -42,32 +45,31 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: AppTheme.netflixRed.withOpacity(0.2),
+                    color: colorScheme.primary.withOpacity(0.2),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.netflixRed.withOpacity(0.3),
+                        color: colorScheme.primary.withOpacity(0.3),
                         blurRadius: 20,
                         spreadRadius: 5,
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.psychology_outlined,
                     size: 50,
-                    color: AppTheme.netflixRed,
+                    color: colorScheme.primary,
                   ),
                 ),
               ),
               const SizedBox(height: 32),
               // App Name
-              const Text(
+              Text(
                 'Synapse',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 36,
+                style: textTheme.displaySmall?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: colorScheme.onBackground,
                   letterSpacing: 2,
                 ),
               ),
@@ -78,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
-                  color: Colors.grey[400],
+                  color: colorScheme.onSurfaceVariant,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -86,11 +88,11 @@ class _LoginScreenState extends State<LoginScreen> {
               // Email Field
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.grey[900],
+                  color: colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
+                      color: colorScheme.shadow.withOpacity(0.2),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -99,20 +101,20 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: TextField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  style: const TextStyle(color: Colors.white),
+                  style: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface),
                   decoration: InputDecoration(
                     hintText: 'Email address',
-                    hintStyle: TextStyle(color: Colors.grey[500]),
-                    prefixIcon: const Icon(
+                    hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+                    prefixIcon: Icon(
                       Icons.email_outlined,
-                      color: Colors.grey,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
                     filled: true,
-                    fillColor: Colors.grey[900],
+                    fillColor: colorScheme.surface,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 20,
                       vertical: 18,
@@ -124,11 +126,11 @@ class _LoginScreenState extends State<LoginScreen> {
               // Password Field
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.grey[900],
+                  color: colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
+                      color: colorScheme.shadow.withOpacity(0.2),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -137,20 +139,20 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: TextField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
-                  style: const TextStyle(color: Colors.white),
+                  style: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface),
                   decoration: InputDecoration(
                     hintText: 'Password',
-                    hintStyle: TextStyle(color: Colors.grey[500]),
-                    prefixIcon: const Icon(
+                    hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+                    prefixIcon: Icon(
                       Icons.lock_outlined,
-                      color: Colors.grey,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
-                        color: Colors.grey,
+                        color: colorScheme.onSurfaceVariant,
                       ),
                       onPressed: () {
                         setState(() {
@@ -163,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderSide: BorderSide.none,
                     ),
                     filled: true,
-                    fillColor: Colors.grey[900],
+                    fillColor: colorScheme.surface,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 20,
                       vertical: 18,
@@ -184,7 +186,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: const Text(
                     'Forgot password?',
                     style: TextStyle(
-                      color: AppTheme.netflixRed,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -199,7 +200,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.netflixRed.withOpacity(0.4),
+                      color: colorScheme.primary.withOpacity(0.4),
                       blurRadius: 15,
                       offset: const Offset(0, 6),
                     ),
@@ -208,20 +209,22 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _handleLogin,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.netflixRed,
-                    foregroundColor: Colors.white,
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: colorScheme.onPrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     elevation: 0,
                   ),
                   child: _isLoading
-                      ? const SizedBox(
+                      ? SizedBox(
                           height: 22,
                           width: 22,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              colorScheme.onPrimary,
+                            ),
                           ),
                         )
                       : const Text(
@@ -242,7 +245,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(
                     "Don't have an account? ",
                     style: TextStyle(
-                      color: Colors.grey[400],
+                      color: colorScheme.onSurfaceVariant,
                       fontSize: 14,
                     ),
                   ),
@@ -260,7 +263,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: const Text(
                       'Sign up',
                       style: TextStyle(
-                        color: AppTheme.netflixRed,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
@@ -277,14 +279,15 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
+    final colorScheme = Theme.of(context).colorScheme;
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter both email and password.'),
-          backgroundColor: AppTheme.netflixRed,
+        SnackBar(
+          content: const Text('Please enter both email and password.'),
+          backgroundColor: colorScheme.error,
         ),
       );
       return;
@@ -308,9 +311,9 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.of(context).pushReplacementNamed('/home');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login failed. Please try again.'),
-            backgroundColor: AppTheme.netflixRed,
+          SnackBar(
+            content: const Text('Login failed. Please try again.'),
+            backgroundColor: colorScheme.error,
           ),
         );
       }
@@ -325,7 +328,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: AppTheme.netflixRed,
+          backgroundColor: colorScheme.error,
         ),
       );
     }

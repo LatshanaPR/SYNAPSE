@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../theme/app_theme.dart';
 import 'login_screen.dart';
 import 'home_screen.dart';
 
@@ -37,27 +36,28 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: AppTheme.black,
+      backgroundColor: colorScheme.background,
       body: Center(
         child: Container(
           width: 120,
           height: 120,
           decoration: BoxDecoration(
-            color: AppTheme.netflixRed.withOpacity(0.2),
+            color: colorScheme.primary.withOpacity(0.2),
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: AppTheme.netflixRed.withOpacity(0.4),
+                color: colorScheme.primary.withOpacity(0.4),
                 blurRadius: 30,
                 spreadRadius: 10,
               ),
             ],
           ),
-          child: const Icon(
+          child: Icon(
             Icons.psychology_outlined,
             size: 70,
-            color: AppTheme.netflixRed,
+            color: colorScheme.primary,
           ),
         ),
       ),

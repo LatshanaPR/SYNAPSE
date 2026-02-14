@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/notes_service.dart';
-import '../theme/app_theme.dart';
 import '../widgets/task_password_dialog.dart';
 import 'notes_trash_screen.dart';
 import 'note_edit_screen.dart';
@@ -65,34 +64,35 @@ class _NotesScreenState extends State<NotesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final currentUser = FirebaseAuth.instance.currentUser;
 
     // Check if user is authenticated
     if (currentUser == null) {
       return Scaffold(
-        backgroundColor: isDark ? AppTheme.black : Colors.white,
+        backgroundColor: colorScheme.background,
         appBar: AppBar(
-          backgroundColor: isDark ? Colors.grey[900] : Colors.white,
-          title: const Text('My Notes'),
+          backgroundColor: colorScheme.surface,
+          title: Text('My Notes', style: textTheme.titleLarge?.copyWith(color: colorScheme.onSurface)),
         ),
         body: Center(
           child: Text(
             'Please sign in to view notes',
-            style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
+            style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface.withOpacity(0.7)),
           ),
         ),
       );
     }
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.black : Colors.white,
+      backgroundColor: colorScheme.background,
       appBar: AppBar(
-        backgroundColor: isDark ? Colors.grey[900] : Colors.white,
-        title: const Text('My Notes'),
+        backgroundColor: colorScheme.surface,
+        title: Text('My Notes', style: textTheme.titleLarge?.copyWith(color: colorScheme.onSurface)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline),
+            icon: Icon(Icons.delete_outline, color: colorScheme.onSurface),
             onPressed: () {
               Navigator.push(
                 context,
@@ -112,11 +112,11 @@ class _NotesScreenState extends State<NotesScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.error_outline, color: Colors.red, size: 48),
+                  Icon(Icons.error_outline, color: colorScheme.error, size: 48),
                   const SizedBox(height: 16),
                   Text(
                     'Error loading notes: ${snapshot.error}',
-                    style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
+                    style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface.withOpacity(0.7)),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -124,7 +124,7 @@ class _NotesScreenState extends State<NotesScreen> {
             );
           }
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: AppTheme.netflixRed));
+            return Center(child: CircularProgressIndicator(color: colorScheme.primary));
           }
 
           final notes = snapshot.data?.docs ?? [];
@@ -132,7 +132,7 @@ class _NotesScreenState extends State<NotesScreen> {
             return Center(
               child: Text(
                 'No notes yet. Tap + to create one.',
-                style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
+                style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface.withOpacity(0.7)),
               ),
             );
           }
@@ -170,14 +170,14 @@ class _NotesScreenState extends State<NotesScreen> {
                 ),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isDark ? Colors.grey[900] : Colors.grey[100],
+                    color: colorScheme.surface,
                     borderRadius: BorderRadius.circular(16),
                     border: isActuallyLocked
-                        ? Border.all(color: AppTheme.netflixRed.withOpacity(0.5), width: 2)
+                        ? Border.all(color: colorScheme.primary.withOpacity(0.5), width: 2)
                         : null,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: colorScheme.shadow.withOpacity(0.1),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -192,10 +192,9 @@ class _NotesScreenState extends State<NotesScreen> {
                           Expanded(
                             child: Text(
                               title,
-                              style: TextStyle(
-                                fontSize: 18,
+                              style: textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : Colors.black,
+                                color: colorScheme.onSurface,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -205,7 +204,7 @@ class _NotesScreenState extends State<NotesScreen> {
                             Icon(
                               Icons.lock,
                               size: 18,
-                              color: AppTheme.netflixRed,
+                              color: colorScheme.primary,
                             ),
                         ],
                       ),
@@ -219,14 +218,14 @@ class _NotesScreenState extends State<NotesScreen> {
                                     Icon(
                                       Icons.lock_outline,
                                       size: 32,
-                                      color: isDark ? Colors.grey[600] : Colors.grey[400],
+                                      color: colorScheme.outline,
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
                                       'Tap to unlock',
-                                      style: TextStyle(
+                                      style: textTheme.bodySmall?.copyWith(
                                         fontSize: 12,
-                                        color: isDark ? Colors.grey[500] : Colors.grey[500],
+                                        color: colorScheme.onSurface.withOpacity(0.7),
                                       ),
                                     ),
                                   ],
@@ -234,9 +233,9 @@ class _NotesScreenState extends State<NotesScreen> {
                               )
                             : Text(
                                 content,
-                                style: TextStyle(
+                                style: textTheme.bodyMedium?.copyWith(
                                   fontSize: 14,
-                                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                                  color: colorScheme.onSurface.withOpacity(0.7),
                                 ),
                                 maxLines: 5,
                                 overflow: TextOverflow.ellipsis,
@@ -246,9 +245,9 @@ class _NotesScreenState extends State<NotesScreen> {
                         const SizedBox(height: 8),
                         Text(
                           _formatDate(updatedAt ?? createdAt!),
-                          style: TextStyle(
+                          style: textTheme.bodySmall?.copyWith(
                             fontSize: 12,
-                            color: isDark ? Colors.grey[500] : Colors.grey[500],
+                            color: colorScheme.onSurface.withOpacity(0.5),
                           ),
                         ),
                       ],
@@ -269,8 +268,8 @@ class _NotesScreenState extends State<NotesScreen> {
             ),
           );
         },
-        backgroundColor: AppTheme.netflixRed,
-        child: const Icon(Icons.add, color: Colors.white),
+        backgroundColor: colorScheme.primary,
+        child: Icon(Icons.add, color: colorScheme.onPrimary),
       ),
     );
   }
