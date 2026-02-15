@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
 import '../theme/app_theme.dart';
 import '../services/profile_service.dart';
 import '../services/task_service.dart';
@@ -48,7 +49,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   final displayName = profileData['displayName'] as String? ??
                       user?.displayName ??
                       emailPrefix;
-                  final photoUrl = profileData['photoUrl'] as String?;
+                  final photoBase64 = profileData['photoBase64'] as String?;
 
                   return Row(
                     children: [
@@ -66,20 +67,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               decoration: BoxDecoration(
                                 color: colorScheme.primary,
                                 borderRadius: BorderRadius.circular(12),
-                                image: photoUrl != null
-                                    ? DecorationImage(
-                                        image: NetworkImage(photoUrl),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: photoBase64 != null
+                                    ? Image.memory(
+                                        base64Decode(photoBase64),
                                         fit: BoxFit.cover,
                                       )
-                                    : null,
+                                    : Icon(
+                                        Icons.person,
+                                        size: 50,
+                                        color: colorScheme.onPrimary,
+                                      ),
                               ),
-                              child: photoUrl == null
-                                  ? Icon(
-                                      Icons.person,
-                                      size: 50,
-                                      color: colorScheme.onPrimary,
-                                    )
-                                  : null,
                             ),
                             Positioned(
                               bottom: 0,

@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/profile_service.dart';
@@ -15,7 +17,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final ProfileService _profileService = ProfileService();
   final TextEditingController _nameController = TextEditingController();
   final ImagePicker _imagePicker = ImagePicker();
-  String? _photoUrl;
+  String? _photoBase64;
   File? _selectedImage;
   bool _isLoading = false;
   bool _isSaving = false;
@@ -38,7 +40,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final profile = await _profileService.getProfile();
       setState(() {
         _nameController.text = profile['displayName'] ?? '';
-        _photoUrl = profile['photoUrl'];
+        _photoBase64 = profile['photoBase64'];
         _isLoading = false;
       });
     } catch (e) {
@@ -92,11 +94,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     setState(() => _isSaving = true);
     try {
-      String? photoUrl = _photoUrl;
-      
-      // Upload new image if selected
+      // Save new image if selected
       if (_selectedImage != null) {
-        photoUrl = await _profileService.uploadProfilePhoto(_selectedImage!);
+        await _profileService.saveProfilePhoto(_selectedImage!);
       }
 
       // Update display name
@@ -183,22 +183,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     decoration: BoxDecoration(
                       color: AppTheme.netflixRed,
                       borderRadius: BorderRadius.circular(16),
-                      image: (_selectedImage != null || _photoUrl != null)
-                          ? DecorationImage(
-                              image: _selectedImage != null
-                                  ? FileImage(_selectedImage!) as ImageProvider
-                                  : NetworkImage(_photoUrl!),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: _selectedImage != null
+                          ? Image.file(
+                              _selectedImage!,
                               fit: BoxFit.cover,
                             )
-                          : null,
+                          : _photoBase64 != null
+                              ? Image.memory(
+                                  base64Decode(_photoBase64!),
+                                  fit: BoxFit.cover,
+                                )
+                              : Icon(
+                                  Icons.person,
+                                  size: 60,
+                                  color: colorScheme.onSurface,
+                                ),
                     ),
-                    child: (_selectedImage == null && _photoUrl == null)
-                        ? Icon(
-                            Icons.person,
-                            size: 60,
-                            color: colorScheme.onSurface,
-                          )
-                        : null,
                   ),
                   Positioned(
                     bottom: 0,

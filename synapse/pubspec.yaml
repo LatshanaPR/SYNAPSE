@@ -45,10 +45,11 @@ dependencies:
   audioplayers: ^6.1.0
   path_provider: ^2.1.4
   timezone: ^0.9.4
-  image_picker: ^1.1.2
+  image_picker: ^1.2.1
   provider: ^6.1.2
   shared_preferences: ^2.3.2
   crypto: ^3.0.6
+  image: ^4.7.2
 
 dev_dependencies:
   flutter_test:
