@@ -7,7 +7,9 @@ import 'alarm_service.dart';
 import 'settings_service.dart';
 import 'task_service.dart';
 
-/// Service that monitors tasks and triggers notifications/alarms at their scheduled times
+/// Service that monitors tasks and schedules notifications/alarms
+/// - Normal/Medium priority: Scheduled directly with Android system (works when app is closed) ✓
+/// - High priority: Requires app to be open to show full-screen alarms (OS limitation)
 class TaskSchedulerService {
   final TaskService _taskService = TaskService();
   final NotificationService _notificationService = NotificationService();
@@ -16,7 +18,7 @@ class TaskSchedulerService {
   
   StreamSubscription<QuerySnapshot>? _tasksSubscription;
   BuildContext? _context;
-  final Map<String, Timer> _activeTimers = {};
+  final Map<String, Timer> _activeTimers = {}; // Used for snooze timers only
   bool _isRunning = false;
 
   /// Start monitoring tasks
@@ -53,12 +55,6 @@ class TaskSchedulerService {
 
   /// Process tasks from Firestore stream
   Future<void> _processTasks(QuerySnapshot snapshot) async {
-    // Cancel all existing timers
-    for (var timer in _activeTimers.values) {
-      timer.cancel();
-    }
-    _activeTimers.clear();
-
     // Check settings
     final notificationsEnabled = await _settingsService.getNotificationsEnabled();
     final alarmsEnabled = await _settingsService.getAlarmsEnabled();
@@ -121,40 +117,30 @@ class TaskSchedulerService {
 
       // Only schedule tasks in the future
       if (reminderTime.isAfter(now)) {
-        final duration = reminderTime.difference(now);
-        
-        // Schedule the notification/alarm
-        final timer = Timer(duration, () async {
-          // If this is a snoozed reminder, clear snoozedUntil and isSnoozed after firing
-          if (isSnoozed) {
-            try {
-              await _taskService.updateTask(taskId, {
-                'snoozedUntil': null,
-                'isSnoozed': false,
-              });
-            } catch (e) {
-              print('Error clearing snoozedUntil: $e');
-            }
+        // Schedule notification directly with Android system (works when app is closed)
+        // High priority tasks will trigger alarms when notification is shown
+        if ((priority == 'Medium' || priority == 'Low' || priority == 'Normal') && notificationsEnabled) {
+          try {
+            await _notificationService.scheduleTaskNotification(
+              taskId: taskId,
+              title: title,
+              description: description,
+              soundPath: soundPath,
+              scheduledTime: reminderTime,
+              priority: priority ?? 'Medium',
+            );
+            print('[SCHEDULER] ✓ Scheduled notification for $title at $reminderTime');
+          } catch (e) {
+            print('[SCHEDULER] ✗ Failed to schedule notification: $e');
           }
-          
-          await _triggerTaskReminder(
-            taskId: taskId,
-            title: title,
-            description: description,
-            priority: priority ?? 'Medium',
-            soundPath: soundPath,
-            notificationsEnabled: notificationsEnabled,
-            alarmsEnabled: alarmsEnabled,
-            snoozedUntilText: isSnoozed ? snoozedUntilText : null,
-          );
-          _activeTimers.remove(taskId);
-        });
-
-        _activeTimers[taskId] = timer;
+        }
+        
+        // Note: High priority alarms can't be pre-scheduled as they need app context
+        // They will trigger when notification is tapped or when app is open at the scheduled time
       } else if (dateTime != null && !dateTime.isAfter(now)) {
         // Task is in the past, trigger immediately if not too old (within last hour)
         final timeDiff = now.difference(dateTime);
-        if (timeDiff.inHours < 1 && _activeTimers.containsKey(taskId) == false) {
+        if (timeDiff.inHours < 1) {
           await _triggerTaskReminder(
             taskId: taskId,
             title: title,

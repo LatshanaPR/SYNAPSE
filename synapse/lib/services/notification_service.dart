@@ -641,6 +641,37 @@ class NotificationService {
     await _notifications.cancel(taskId.hashCode + 1); // 1-day reminder
   }
 
+  /// Schedule a task notification at a specific time (works when app is closed)
+  /// This method directly schedules with the Android system, not using Dart timers
+  Future<void> scheduleTaskNotification({
+    required String taskId,
+    required String title,
+    String? description,
+    String? soundPath,
+    required DateTime scheduledTime,
+    required String priority,
+  }) async {
+    // Check if notifications are enabled
+    if (!await _areNotificationsEnabled()) {
+      print('[SCHEDULE] Notifications disabled, skipping scheduleTaskNotification');
+      return;
+    }
+
+    // High priority tasks should not be scheduled as notifications - they need alarms
+    if (priority == 'High') {
+      print('[SCHEDULE] High priority task - skipping notification schedule (use alarm instead)');
+      return;
+    }
+
+    await _scheduleNotificationAtTime(
+      taskId: taskId,
+      title: title,
+      description: description,
+      soundPath: soundPath,
+      scheduledTime: scheduledTime,
+    );
+  }
+
   /// Schedule pre-reminder notifications (2 days before AND 1 day before).
   /// Uses separate notification IDs to avoid conflicts with main notification.
   /// Does NOT include snooze actions - these are just heads-up reminders.
