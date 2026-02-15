@@ -118,4 +118,34 @@ class SettingsService {
       };
     });
   }
+
+  /// Get notification sound setting
+  /// Returns empty string by default (uses system default sound)
+  Future<String> getNotificationSound() async {
+    try {
+      final doc = await _getSettingsRef().get();
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data() as Map<String, dynamic>;
+        return data['notificationSound'] ?? '';
+      }
+      return ''; // Use system default
+    } catch (e) {
+      return ''; // Use system default on error
+    }
+  }
+
+  /// Get alarm sound setting
+  /// Returns empty string by default (uses system default sound)
+  Future<String> getAlarmSound() async {
+    try {
+      final doc = await _getSettingsRef().get();
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data() as Map<String, dynamic>;
+        return data['alarmSound'] ?? '';
+      }
+      return ''; // Use system default
+    } catch (e) {
+      return ''; // Use system default on error
+    }
+  }
 }

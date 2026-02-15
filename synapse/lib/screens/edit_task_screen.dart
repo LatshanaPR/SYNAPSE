@@ -299,6 +299,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                 const SizedBox(height: 20),
                 // Sound Picker
                 SoundPickerWidget(
+                  soundType: _selectedPriority == 'Normal' ? 'notification' : 'alarm',
                   initialSound: _selectedSound,
                   onSoundSelected: (sound) {
                     setState(() {

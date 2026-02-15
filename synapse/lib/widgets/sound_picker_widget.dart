@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
+import 'dart:io';
 import '../theme/app_theme.dart';
+import '../services/ringtone_picker_service.dart';
 
-/// Widget for selecting sound for tasks
-/// Supports 4 built-in sounds and custom sound file picker
+/// Widget for selecting alarm or notification sound
+/// Supports Device Ringtone (system ringtone picker) and Custom Sound (file picker)
 class SoundPickerWidget extends StatefulWidget {
   final String? initialSound;
   final Function(String?) onSoundSelected;
+  final String soundType; // 'notification' or 'alarm'
 
   const SoundPickerWidget({
     super.key,
     this.initialSound,
     required this.onSoundSelected,
+    this.soundType = 'alarm',
   });
 
   @override
@@ -19,30 +25,96 @@ class SoundPickerWidget extends StatefulWidget {
 }
 
 class _SoundPickerWidgetState extends State<SoundPickerWidget> {
-  static const List<String> _builtInSounds = [
-    'Default',
-    'Soft Beep',
-    'Digital Tone',
-    'Classic Alarm',
-  ];
-
-  String? _selectedSound;
   String? _customSoundPath;
+  String? _ringtoneUri;
+  String? _ringtoneName;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  bool _isPlaying = false;
 
   @override
   void initState() {
     super.initState();
-    // Parse initial sound - can be built-in name or custom path
-    if (widget.initialSound != null) {
-      if (_builtInSounds.contains(widget.initialSound)) {
-        _selectedSound = widget.initialSound;
+    // Parse initial sound - can be ringtone URI or custom path
+    if (widget.initialSound != null && widget.initialSound!.isNotEmpty) {
+      if (widget.initialSound!.startsWith('content://')) {
+        // It's a ringtone URI
+        _ringtoneUri = widget.initialSound;
+        _ringtoneName = widget.soundType == 'notification' 
+            ? 'Device Notification' 
+            : 'Device Alarm';
       } else {
         // It's a custom sound path
         _customSoundPath = widget.initialSound;
-        _selectedSound = 'Custom';
       }
-    } else {
-      _selectedSound = 'Default';
+    }
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  /// Stop any currently playing preview
+  Future<void> _stopPreview() async {
+    try {
+      await _audioPlayer.stop();
+      await FlutterRingtonePlayer().stop();
+      if (mounted) {
+        setState(() {
+          _isPlaying = false;
+        });
+      }
+    } catch (e) {
+      print('Error stopping preview: $e');
+    }
+  }
+
+  /// Play sound preview
+  Future<void> _playPreview(String soundIdentifier) async {
+    try {
+      // Stop any currently playing sound
+      await _stopPreview();
+
+      setState(() {
+        _isPlaying = true;
+      });
+
+      // Play based on sound type
+      if (soundIdentifier.startsWith('content://')) {
+        // Ringtone URI - use flutter_ringtone_player
+        await FlutterRingtonePlayer().play(
+          android: AndroidSounds.ringtone,
+          fromAsset: soundIdentifier,
+          looping: false,
+          volume: 0.7,
+        );
+        // Auto-stop after 3 seconds
+        await Future.delayed(const Duration(seconds: 3));
+        await _stopPreview();
+      } else {
+        // Custom sound file
+        final file = File(soundIdentifier);
+        if (await file.exists()) {
+          await _audioPlayer.play(DeviceFileSource(soundIdentifier));
+          // Auto-stop after playing
+          await Future.delayed(const Duration(seconds: 3));
+          await _stopPreview();
+        } else {
+          if (mounted) {
+            setState(() {
+              _isPlaying = false;
+            });
+          }
+        }
+      }
+    } catch (e) {
+      print('Error playing preview: $e');
+      if (mounted) {
+        setState(() {
+          _isPlaying = false;
+        });
+      }
     }
   }
 
@@ -56,9 +128,14 @@ class _SoundPickerWidgetState extends State<SoundPickerWidget> {
       if (result != null && result.files.single.path != null) {
         setState(() {
           _customSoundPath = result.files.single.path;
-          _selectedSound = 'Custom';
+          _ringtoneUri = null;
+          _ringtoneName = null;
         });
         widget.onSoundSelected(_customSoundPath);
+        // Play preview of custom sound
+        if (_customSoundPath != null) {
+          _playPreview(_customSoundPath!);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -72,48 +149,70 @@ class _SoundPickerWidgetState extends State<SoundPickerWidget> {
     }
   }
 
-  void _onBuiltInSoundSelected(String sound) {
-    setState(() {
-      _selectedSound = sound;
-      _customSoundPath = null;
-    });
-    
-    // Map built-in sounds to identifiers
-    String soundPath;
-    switch (sound) {
-      case 'Default':
-        soundPath = 'builtin_default';
-        break;
-      case 'Soft Beep':
-        soundPath = 'builtin_soft_beep';
-        break;
-      case 'Digital Tone':
-        soundPath = 'builtin_digital_tone';
-        break;
-      case 'Classic Alarm':
-        soundPath = 'builtin_classic_alarm';
-        break;
-      default:
-        soundPath = 'builtin_default';
+  /// Pick device ringtone using Android system picker
+  Future<void> _pickDeviceRingtone() async {
+    if (!Platform.isAndroid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Device ringtones are only available on Android'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
     }
-    
-    widget.onSoundSelected(soundPath);
+
+    try {
+      // Use platform channel to open Android ringtone picker
+      final ringtoneType = widget.soundType == 'notification' 
+          ? RingtonePickerService.TYPE_NOTIFICATION 
+          : RingtonePickerService.TYPE_ALARM;
+      final result = await RingtonePickerService.pickRingtone(
+        type: ringtoneType,
+      );
+
+      if (result != null) {
+        final defaultName = widget.soundType == 'notification' 
+            ? 'Device Notification Sound' 
+            : 'Device Alarm Sound';
+        setState(() {
+          _ringtoneUri = result['uri'];
+          _ringtoneName = result['title'] ?? defaultName;
+          _customSoundPath = null;
+        });
+        widget.onSoundSelected(result['uri']);
+        
+        // Play preview of selected ringtone
+        if (_ringtoneUri != null) {
+          _playPreview(_ringtoneUri!);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error picking ringtone: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final bool hasDeviceRingtone = _ringtoneUri != null;
+    final bool hasCustomSound = _customSoundPath != null;
+    
+    final isNotification = widget.soundType == 'notification';
+    final deviceLabel = isNotification ? 'Device Notification Sound' : 'Device Alarm Sound';
+    final deviceSubtitle = isNotification ? 'Use device notification sound' : 'Use device alarm sound';
+    final customLabel = isNotification ? 'Custom Notification' : 'Custom';
+    final customSubtitle = isNotification ? 'Select notification audio' : 'Select alarm audio';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Notification Sound',
-          style: TextStyle(
-            color: colorScheme.onSurfaceVariant,
-            fontSize: 14,
-          ),
-        ),
-        const SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(
             color: colorScheme.surface,
@@ -122,98 +221,72 @@ class _SoundPickerWidgetState extends State<SoundPickerWidget> {
           ),
           child: Column(
             children: [
-              ..._builtInSounds.map((sound) {
-                final isSelected = _selectedSound == sound && _customSoundPath == null;
-                return Column(
-                  children: [
-                    RadioListTile<String>(
-                      title: Text(
-                        sound,
-                        style: TextStyle(
-                          color: colorScheme.onSurface,
-                          fontSize: 16,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                        ),
-                      ),
-                      value: sound,
-                      groupValue: _customSoundPath == null ? _selectedSound : null,
-                      onChanged: (value) {
-                        if (value != null) {
-                          _onBuiltInSoundSelected(value);
-                        }
-                      },
-                      activeColor: AppTheme.netflixRed,
-                      selected: isSelected,
+              // Device Alarm Sound Option (Android only)
+              if (Platform.isAndroid) ...[
+                ListTile(
+                  leading: Icon(
+                    isNotification ? Icons.notifications : Icons.alarm,
+                    color: hasDeviceRingtone ? AppTheme.netflixRed : colorScheme.onSurfaceVariant,
+                  ),
+                  title: Text(
+                    hasDeviceRingtone
+                        ? _ringtoneName ?? deviceLabel
+                        : deviceLabel,
+                    style: TextStyle(
+                      color: colorScheme.onSurface,
+                      fontSize: 16,
+                      fontWeight: hasDeviceRingtone ? FontWeight.w600 : FontWeight.normal,
                     ),
-                    if (sound != _builtInSounds.last)
-                      Divider(
-                        height: 1,
-                        thickness: 1,
-                        color: colorScheme.surfaceVariant,
-                        indent: 16,
-                        endIndent: 16,
-                      ),
-                  ],
-                );
-              }),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  subtitle: hasDeviceRingtone
+                      ? Text('System ${isNotification ? "notification" : "alarm"} sound')
+                      : Text(deviceSubtitle),
+                  trailing: IconButton(
+                    icon: Icon(Icons.arrow_forward_ios, size: 16, color: colorScheme.onSurfaceVariant),
+                    onPressed: _pickDeviceRingtone,
+                    tooltip: hasDeviceRingtone ? 'Change' : 'Select',
+                  ),
+                  onTap: _pickDeviceRingtone,
+                ),
+                Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: colorScheme.surfaceVariant,
+                  indent: 16,
+                  endIndent: 16,
+                ),
+              ],
               // Custom Sound Option
-              Divider(
-                height: 1,
-                thickness: 1,
-                color: colorScheme.surfaceVariant,
-                indent: 16,
-                endIndent: 16,
-              ),
-              RadioListTile<String>(
+              ListTile(
+                leading: Icon(
+                  Icons.audiotrack,
+                  color: hasCustomSound ? AppTheme.netflixRed : colorScheme.onSurfaceVariant,
+                ),
                 title: Text(
-                  _customSoundPath != null
-                      ? 'Custom: ${_customSoundPath!.split('/').last}'
-                      : 'Custom Sound',
+                  customLabel,
                   style: TextStyle(
                     color: colorScheme.onSurface,
                     fontSize: 16,
-                    fontWeight: _customSoundPath != null ? FontWeight.w600 : FontWeight.normal,
+                    fontWeight: hasCustomSound ? FontWeight.w600 : FontWeight.normal,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                value: 'Custom',
-                groupValue: _customSoundPath != null ? 'Custom' : null,
-                onChanged: (value) async {
-                  await _pickCustomSound();
-                },
-                activeColor: AppTheme.netflixRed,
-                selected: _customSoundPath != null,
-                secondary: _customSoundPath != null
-                    ? IconButton(
-                        icon: Icon(Icons.close, color: colorScheme.onSurfaceVariant),
-                        onPressed: () {
-                          setState(() {
-                            _customSoundPath = null;
-                            _selectedSound = 'Default';
-                          });
-                          widget.onSoundSelected('builtin_default');
-                        },
-                      )
-                    : null,
+                subtitle: hasCustomSound
+                    ? Text('Custom ${isNotification ? "notification" : "alarm"} audio')
+                    : Text(customSubtitle),
+                trailing: IconButton(
+                  icon: Icon(Icons.arrow_forward_ios, size: 16, color: colorScheme.onSurfaceVariant),
+                  onPressed: _pickCustomSound,
+                  tooltip: hasCustomSound ? 'Change' : 'Select',
+                ),
+                onTap: _pickCustomSound,
               ),
             ],
           ),
         ),
-        if (_customSoundPath != null) ...[
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: TextButton.icon(
-              onPressed: _pickCustomSound,
-              icon: const Icon(Icons.audiotrack, size: 20),
-              label: const Text('Change Custom Sound'),
-              style: TextButton.styleFrom(
-                foregroundColor: AppTheme.netflixRed,
-              ),
-            ),
-          ),
-        ],
       ],
     );
   }

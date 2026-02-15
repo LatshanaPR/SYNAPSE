@@ -275,6 +275,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                 const SizedBox(height: 20),
                 // Sound Picker
                 SoundPickerWidget(
+                  soundType: _selectedPriority == 'Normal' ? 'notification' : 'alarm',
                   onSoundSelected: (sound) {
                     setState(() {
                       _selectedSound = sound;

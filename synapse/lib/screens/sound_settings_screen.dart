@@ -28,21 +28,21 @@ class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
       if (doc.exists && doc.data() != null) {
         final data = doc.data() as Map<String, dynamic>;
         setState(() {
-          _selectedNotificationSound = data['notificationSound'] ?? 'builtin_default';
-          _selectedAlarmSound = data['alarmSound'] ?? 'builtin_default';
+          _selectedNotificationSound = data['notificationSound'] ?? '';
+          _selectedAlarmSound = data['alarmSound'] ?? '';
           _isLoading = false;
         });
       } else {
         setState(() {
-          _selectedNotificationSound = 'builtin_default';
-          _selectedAlarmSound = 'builtin_default';
+          _selectedNotificationSound = '';
+          _selectedAlarmSound = '';
           _isLoading = false;
         });
       }
     } catch (e) {
       setState(() {
-        _selectedNotificationSound = 'builtin_default';
-        _selectedAlarmSound = 'builtin_default';
+        _selectedNotificationSound = '';
+        _selectedAlarmSound = '';
         _isLoading = false;
       });
     }
@@ -51,11 +51,11 @@ class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
   Future<void> _saveNotificationSound(String? soundPath) async {
     try {
       await _settingsService.getSettingsRef().set({
-        'notificationSound': soundPath ?? 'builtin_default',
+        'notificationSound': soundPath ?? '',
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
       setState(() {
-        _selectedNotificationSound = soundPath ?? 'builtin_default';
+        _selectedNotificationSound = soundPath ?? '';
       });
     } catch (e) {
       if (mounted) {
@@ -72,11 +72,11 @@ class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
   Future<void> _saveAlarmSound(String? soundPath) async {
     try {
       await _settingsService.getSettingsRef().set({
-        'alarmSound': soundPath ?? 'builtin_default',
+        'alarmSound': soundPath ?? '',
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
       setState(() {
-        _selectedAlarmSound = soundPath ?? 'builtin_default';
+        _selectedAlarmSound = soundPath ?? '';
       });
     } catch (e) {
       if (mounted) {
@@ -148,6 +148,7 @@ class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
               SoundPickerWidget(
                 initialSound: _selectedNotificationSound,
                 onSoundSelected: _saveNotificationSound,
+                soundType: 'notification',
               ),
               const SizedBox(height: 32),
               // Alarm Sound Section
@@ -156,6 +157,7 @@ class _SoundSettingsScreenState extends State<SoundSettingsScreen> {
               SoundPickerWidget(
                 initialSound: _selectedAlarmSound,
                 onSoundSelected: _saveAlarmSound,
+                soundType: 'alarm',
               ),
             ],
           ),
