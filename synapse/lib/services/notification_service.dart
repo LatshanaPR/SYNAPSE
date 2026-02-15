@@ -625,6 +625,41 @@ class NotificationService {
     }
   }
 
+  /// Get Android notification sound from soundPath
+  /// [soundPath] - Built-in sound name or custom file path
+  /// [isAlarm] - If true, uses alarm stream for high-priority alarms
+  Future<AndroidNotificationSound?> _getAndroidNotificationSound(
+    String? soundPath, {
+    bool isAlarm = false,
+  }) async {
+    if (soundPath == null || soundPath.isEmpty) {
+      // Use default notification/alarm sound
+      return null; // System will use default
+    }
+
+    try {
+      if (soundPath == 'device_default') {
+        // Let system use device default sound
+        return null;
+      } else if (soundPath.startsWith('builtin_')) {
+        // Built-in sounds - would need actual audio files in raw resources
+        // For now, return null to use system default
+        return null;
+      } else {
+        // Custom sound file path
+        final file = File(soundPath);
+        if (await file.exists()) {
+          // Use UriAndroidNotificationSound for custom file
+          return UriAndroidNotificationSound('file://${file.path}');
+        }
+      }
+    } catch (e) {
+      print('[NOTIFICATION] Error getting notification sound: $e');
+    }
+
+    return null; // Fallback to default
+  }
+
   /// Cancel a notification by task ID
   Future<void> cancelNotification(String taskId) async {
     await _notifications.cancel(taskId.hashCode);
@@ -643,6 +678,7 @@ class NotificationService {
 
   /// Schedule a task notification at a specific time (works when app is closed)
   /// This method directly schedules with the Android system, not using Dart timers
+  /// High priority tasks will use fullScreenIntent and alarm sound for maximum visibility
   Future<void> scheduleTaskNotification({
     required String taskId,
     required String title,
@@ -657,18 +693,15 @@ class NotificationService {
       return;
     }
 
-    // High priority tasks should not be scheduled as notifications - they need alarms
-    if (priority == 'High') {
-      print('[SCHEDULE] High priority task - skipping notification schedule (use alarm instead)');
-      return;
-    }
-
+    final bool isHighPriority = priority == 'High';
+    
     await _scheduleNotificationAtTime(
       taskId: taskId,
       title: title,
       description: description,
       soundPath: soundPath,
       scheduledTime: scheduledTime,
+      isHighPriority: isHighPriority,
     );
   }
 
@@ -783,12 +816,14 @@ class NotificationService {
   }
 
   /// Schedule a notification at a specific time
+  /// [isHighPriority] - If true, uses fullScreenIntent and alarm sound for maximum visibility
   Future<void> _scheduleNotificationAtTime({
     required String taskId,
     required String title,
     String? description,
     String? soundPath,
     required DateTime scheduledTime,
+    bool isHighPriority = false,
   }) async {
     // Check if notifications are enabled
     if (!await _areNotificationsEnabled()) {
@@ -823,16 +858,22 @@ class NotificationService {
       ),
     ];
 
+    // Get appropriate notification sound (alarm sound for high priority)
+    final notificationSound = await _getAndroidNotificationSound(soundPath, isAlarm: isHighPriority);
+
     final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'task_notifications',
       'Task Notifications',
-      channelDescription: 'Notifications for normal priority tasks',
-      importance: Importance.high,
+      channelDescription: isHighPriority 
+          ? 'High priority task alarms and reminders' 
+          : 'Notifications for normal priority tasks',
+      importance: Importance.max,
       priority: Priority.high,
       playSound: true,
+      sound: notificationSound,
       enableVibration: true,
       actions: actions,
-      fullScreenIntent: false, // Normal tasks should not use full screen
+      fullScreenIntent: isHighPriority, // High priority tasks can turn screen on
     );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(

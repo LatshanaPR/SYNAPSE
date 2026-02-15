@@ -118,8 +118,22 @@ class TaskSchedulerService {
       // Only schedule tasks in the future
       if (reminderTime.isAfter(now)) {
         // Schedule notification directly with Android system (works when app is closed)
-        // High priority tasks will trigger alarms when notification is shown
-        if ((priority == 'Medium' || priority == 'Low' || priority == 'Normal') && notificationsEnabled) {
+        // High priority tasks will use fullScreenIntent and alarm sound
+        if (priority == 'High' && alarmsEnabled) {
+          try {
+            await _notificationService.scheduleTaskNotification(
+              taskId: taskId,
+              title: title,
+              description: description,
+              soundPath: soundPath,
+              scheduledTime: reminderTime,
+              priority: priority ?? 'High',
+            );
+            print('[SCHEDULER] ✓ Scheduled HIGH PRIORITY alarm notification for $title at $reminderTime');
+          } catch (e) {
+            print('[SCHEDULER] ✗ Failed to schedule alarm notification: $e');
+          }
+        } else if ((priority == 'Medium' || priority == 'Low' || priority == 'Normal') && notificationsEnabled) {
           try {
             await _notificationService.scheduleTaskNotification(
               taskId: taskId,
@@ -134,9 +148,6 @@ class TaskSchedulerService {
             print('[SCHEDULER] ✗ Failed to schedule notification: $e');
           }
         }
-        
-        // Note: High priority alarms can't be pre-scheduled as they need app context
-        // They will trigger when notification is tapped or when app is open at the scheduled time
       } else if (dateTime != null && !dateTime.isAfter(now)) {
         // Task is in the past, trigger immediately if not too old (within last hour)
         final timeDiff = now.difference(dateTime);
